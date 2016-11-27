@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import unittest
 
 def cosd(angle):
     """cosine of angle in degree"""
@@ -8,6 +9,7 @@ def cosd(angle):
 def sind(angle):
     """sine of angle in degree"""
     return math.sin(math.radians(angle))
+
 
 
 
@@ -21,16 +23,22 @@ def direct_kinematics(theta_1, theta_2, theta_3, theta_4, theta_5, theta_6):
     t5TCP = Transformation(alpha=0,  a=0,    theta=theta_6,     d=-115)
     return t01 * t12 * t23 * t34 * t45 * t5TCP
 
+class JointSpaceVector(object):
+    def __init__(self, angles=[0,0,0,0,0,0]):
+        self.angles = angles
+
+    def transformation(self):
+        return direct_kinematics(self.angles[0], self.angles[1], self.angles[2], self.angles[3], self.angles[4], self.angles[5])
+    
+
 
 class Transformation(object):
     """A simple class wrapping a standart robot transformation"""
-    def __init__(self, matrix=np.eye(4,4), a=0, d=0, alpha=0, theta=0):
-        """Introduce Epmty Transformation"""
+    def __init__(self, matrix=np.eye(4,4,dtype=np.float64), a=0, d=0, alpha=0, theta=0):
         self.matrix = matrix
         self.rotate_x(alpha) # because we start from the right side
         self.translate([a, 0, d])
         self.rotate_z(theta)
-        pass
 
     def rotate(self, axis, angle="0"):
         """ rotate given translation by given axis and angle """
@@ -49,7 +57,7 @@ class Transformation(object):
 
     def translate(self, vector3):
         """ translate matrix by given vector3 """
-        transform = np.eye(4, 4)
+        transform = np.eye(4, 4,dtype=np.float64)
         transform[0][3] = vector3[0]
         transform[1][3] = vector3[1]
         transform[2][3] = vector3[2]
@@ -58,7 +66,7 @@ class Transformation(object):
 
     def rotate_x(self, angle):
         """ rotate around the x axis """
-        transform = np.eye(4, 4)
+        transform = np.eye(4, 4,dtype=np.float64)
         transform[1][1] = cosd(angle)
         transform[1][2] = -1 * sind(angle)
         transform[2][1] = sind(angle)
@@ -68,7 +76,7 @@ class Transformation(object):
 
     def rotate_y(self, angle):
         """ rotate around the y axis """
-        transform = np.eye(4, 4)
+        transform = np.eye(4, 4,dtype=np.float64)
         transform[0][0] = cosd(angle)
         transform[0][2] = -1 * sind(angle)
         transform[2][0] = sind(angle)
@@ -78,7 +86,7 @@ class Transformation(object):
 
     def rotate_z(self, angle):
         """ rotate around the z axis """
-        transform = np.eye(4, 4)
+        transform = np.eye(4, 4,dtype=np.float64)
         transform[0][0] = cosd(angle)
         transform[0][1] = -1 * sind(angle)
         transform[1][0] = sind(angle)
@@ -95,16 +103,15 @@ class Transformation(object):
     def __str__(self):
         return str(self.matrix)
 
+class TestDirectKinematics(unittest.TestCase):
+    def testNullPosition(self):
+        nullPosition=JointSpaceVector(angles=[0,0,-90,0,0,0])
+        desired_result = np.array([
+            [.0,.0,-1.0,1725.0],
+            [.0,-1.0,.0,.0],
+            [-1.0,.0,.0,-640.0],
+            [.0,.0,.0,1.0]],dtype=np.float64)
+        np.testing.assert_allclose(nullPosition.transformation().matrix, desired_result, atol=0.001)
+
 if __name__ == '__main__':
-    x = direct_kinematics(0,0,-90,0,0,0)
-    print(str(x))
-
-    t = Transformation()
-    t.translate([0,5,7])
-    t.rotate_x(90)
-    print(str(t))
-
-    t = Transformation()
-    t.translate([7,0,0])
-    t.rotate_z(90)
-    print(t)
+    unittest.main()
