@@ -14,29 +14,22 @@ def sind(angle):
 def direct_kinematics(theta_1, theta_2, theta_3, theta_4, theta_5, theta_6):
     """ calculate direct kinematics """
     t01 = Transformation(alpha=90,   a=260,  theta=theta_1,     d=-675)
-    t12 = Transformation(alpha=0,    a=680,  theta=theta_2-90,  d=0)
+    t12 = Transformation(alpha=0,    a=680,  theta=theta_2,     d=0)
     t23 = Transformation(alpha=90,   a=-35,  theta=theta_3,     d=0)
     t34 = Transformation(alpha=-90,  a=0,    theta=theta_4,     d=-670)
     t45 = Transformation(alpha=90,   a=0,    theta=theta_5,     d=0)
     t5TCP = Transformation(alpha=0,  a=0,    theta=theta_6,     d=-115)
-
-
     return t01 * t12 * t23 * t34 * t45 * t5TCP
 
 
-
-
 class Transformation(object):
-
-
     """A simple class wrapping a standart robot transformation"""
     def __init__(self, matrix=np.eye(4,4), a=0, d=0, alpha=0, theta=0):
         """Introduce Epmty Transformation"""
         self.matrix = matrix
+        self.rotate_x(theta) # because we start from the right side
+        self.translate([d, 0, a])
         self.rotate_z(alpha)
-        self.translate([0, 0, a])
-        self.translate([d, 0, 0])
-        self.rotate_x(theta)
         pass
 
     def rotate(self, axis, angle="0"):
@@ -50,7 +43,7 @@ class Transformation(object):
         return self
 
     def transform(self, matrix):
-        """ transform self by given matrix """
+        """ transform self by given matrix (transformation*matrix) """
         self.matrix = np.dot(matrix, self.matrix)
         return self
 
@@ -103,7 +96,15 @@ class Transformation(object):
         return str(self.matrix)
 
 if __name__ == '__main__':
-    x = direct_kinematics(0,0,-90,0,0,0)
+    x = direct_kinematics(0,0,0,0,0,0)
     print(str(x))
-    t01 = Transformation(alpha=90,   a=260,  theta=0,     d=-675)
-    print(t01)
+
+    t = Transformation()
+    t.translate([0,5,7])
+    t.rotate_x(90)
+    print(str(t))
+
+    t = Transformation()
+    t.translate([7,0,0])
+    t.rotate_z(90)
+    print(t)
