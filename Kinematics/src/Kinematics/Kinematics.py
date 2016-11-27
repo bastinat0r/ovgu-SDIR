@@ -27,9 +27,9 @@ class Transformation(object):
     def __init__(self, matrix=np.eye(4,4), a=0, d=0, alpha=0, theta=0):
         """Introduce Epmty Transformation"""
         self.matrix = matrix
-        self.rotate_x(theta) # because we start from the right side
-        self.translate([d, 0, a])
-        self.rotate_z(alpha)
+        self.rotate_x(alpha) # because we start from the right side
+        self.translate([a, 0, d])
+        self.rotate_z(theta)
         pass
 
     def rotate(self, axis, angle="0"):
@@ -96,7 +96,7 @@ class Transformation(object):
         return str(self.matrix)
 
 if __name__ == '__main__':
-    x = direct_kinematics(0,0,0,0,0,0)
+    x = direct_kinematics(0,0,-90,0,0,0)
     print(str(x))
 
     t = Transformation()
