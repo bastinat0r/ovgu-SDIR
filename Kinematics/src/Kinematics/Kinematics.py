@@ -38,16 +38,19 @@ class JointSpaceVector(object):
     def t5TCP(self):
         return Transformation(alpha=0,  a=0,    theta=self.angles[5],     d=-115)
 
+    def t3WCP(self):
+        return Transformation(alpha=0,  a=0,    theta=0,     d=-670)
+
 
 
     def wristCenterPointTransformation(self):
-        return self.t01() * self.t12() * self.t23()
+        return self.t01() * self.t12() * self.t23() * self.t3WCP()
 
     def wristToTCPTransformation(self):
         return self.t34() * self.t45() * self.t5TCP()
 
     def baseToTCP(self):
-        return self.wristCenterPointTransformation() * self.wristToTCPTransformation()
+        return self.t01() * self.t12() * self.t23() * self.t34() * self.t45() * self.t5TCP()
 
 
 class Transformation(object):
