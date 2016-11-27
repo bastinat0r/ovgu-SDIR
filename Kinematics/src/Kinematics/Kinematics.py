@@ -21,6 +21,7 @@ class Transformation(object):
         return self
 
     def transform(self, matrix):
+        """ transform self by given matrix """
         self.matrix = np.dot(self.matrix, matrix)
         return self
 
@@ -34,7 +35,7 @@ class Transformation(object):
 
 
     def rotate_x(self, angle):
-        """ rotate around the z axis """
+        """ rotate around the x axis """
         transform = np.eye(4, 4)
         transform[1][1] = cos(angle)
         transform[1][2] = -1 * sin(angle)
@@ -44,7 +45,7 @@ class Transformation(object):
 
 
     def rotate_y(self, angle):
-        """ rotate around the z axis """
+        """ rotate around the y axis """
         transform = np.eye(4, 4)
         transform[0][0] = cos(angle)
         transform[0][2] = -1 * sin(angle)
@@ -61,3 +62,4 @@ class Transformation(object):
         transform[1][0] = sin(angle)
         transform[1][1] = cos(angle)
         return self.transform(transform)
+
