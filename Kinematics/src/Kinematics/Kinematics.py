@@ -14,22 +14,40 @@ def sind(angle):
 
 
 def direct_kinematics(theta_1, theta_2, theta_3, theta_4, theta_5, theta_6):
-    """ calculate direct kinematics """
-    t01 = Transformation(alpha=90,   a=260,  theta=theta_1,     d=-675)
-    t12 = Transformation(alpha=0,    a=680,  theta=theta_2,     d=0)
-    t23 = Transformation(alpha=90,   a=-35,  theta=theta_3,     d=0)
-    t34 = Transformation(alpha=-90,  a=0,    theta=theta_4,     d=-670)
-    t45 = Transformation(alpha=90,   a=0,    theta=theta_5,     d=0)
-    t5TCP = Transformation(alpha=0,  a=0,    theta=theta_6,     d=-115)
     return t01 * t12 * t23 * t34 * t45 * t5TCP
 
 class JointSpaceVector(object):
     def __init__(self, angles=[0,0,0,0,0,0]):
         self.angles = angles
 
-    def transformation(self):
-        return direct_kinematics(self.angles[0], self.angles[1], self.angles[2], self.angles[3], self.angles[4], self.angles[5])
+    def t01(self):
+        return Transformation(alpha=90,   a=260,  theta=self.angles[0],     d=-675)
+
+    def t12(self):
+        return Transformation(alpha=0,    a=680,  theta=self.angles[1],     d=0)
+
+    def t23(self):
+        return Transformation(alpha=90,   a=-35,  theta=self.angles[2],     d=0)
+
+    def t34(self):
+        return Transformation(alpha=-90,  a=0,    theta=self.angles[3],     d=-670)
+
+    def t45(self):
+        return Transformation(alpha=90,   a=0,    theta=self.angles[4],     d=0)
     
+    def t5TCP(self):
+        return Transformation(alpha=0,  a=0,    theta=self.angles[5],     d=-115)
+
+
+
+    def wristCenterPointTransformation(self):
+        return self.t01() * self.t12() * self.t23()
+
+    def wristToTCPTransformation(self):
+        return self.t34() * self.t45() * self.t5TCP()
+
+    def baseToTCP(self):
+        return self.wristCenterPointTransformation() * self.wristToTCPTransformation()
 
 
 class Transformation(object):
@@ -104,14 +122,35 @@ class Transformation(object):
         return str(self.matrix)
 
 class TestDirectKinematics(unittest.TestCase):
-    def testNullPosition(self):
-        nullPosition=JointSpaceVector(angles=[0,0,-90,0,0,0])
+    def testNullTransformation(self):
+        nullTransformation=JointSpaceVector(angles=[0,0,-90,0,0,0])
         desired_result = np.array([
             [.0,.0,-1.0,1725.0],
             [.0,-1.0,.0,.0],
             [-1.0,.0,.0,-640.0],
             [.0,.0,.0,1.0]],dtype=np.float64)
-        np.testing.assert_allclose(nullPosition.transformation().matrix, desired_result, atol=0.001)
+        np.testing.assert_allclose(nullTransformation.baseToTCP().matrix, desired_result, atol=0.001)
+
+    def testStandartTransformation(self):
+        nullTransformation=JointSpaceVector(angles=[0,-90,0,0,0,0])
+        desired_result = np.array([
+            [.0,.0,-1.0,1045.0],
+            [.0,-1.0,.0,.0],
+            [-1.0,.0,.0,-1320.0],
+            [.0,.0,.0,1.0]],dtype=np.float64)
+        np.testing.assert_allclose(nullTransformation.baseToTCP().matrix, desired_result, atol=0.001)
+
+    def testStraightTransformation(self):
+        nullTransformation=JointSpaceVector(angles=[0,-90,-90,-90,0,0])
+        desired_result = np.array([
+            [.0,-1.0,.0,295.0],
+            [1.0,.0,.0,.0],
+            [.0,.0,1.0,-2140.0],
+            [.0,.0,.0,1.0]],dtype=np.float64)
+        np.testing.assert_allclose(nullTransformation.baseToTCP().matrix, desired_result, atol=0.001)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
