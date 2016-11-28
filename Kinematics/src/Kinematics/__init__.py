@@ -43,13 +43,7 @@ def dataTransfer():
         sock.close()
     
 
-# handles the data received from the GUI and sets up data for sending
-def handleData(data):
-    # split data string
-    data_arr = data.split("#")
-    
-    # check if GUI requests the current robot axis values as well as current orientation and position 
-    if data_arr[0] == 'GET':
+def assembleValueString():
         # prefix for parsing
         prefix = "VAL#"
         # get Axis values
@@ -57,8 +51,21 @@ def handleData(data):
         # convert to string
         axis_values = str(axis_arr[0])+";"+str(axis_arr[1])+";"+str(axis_arr[2])+";"+str(axis_arr[3])+";"+str(axis_arr[4])+";"+str(axis_arr[5])+'#'
         # adding dummy values for orientation and position (you need to compute the values)
-        cart_values = "0;0;0;0;0;0"
+        jsv = kin.JointSpaceVector(axis_arr)
+        tcp = jsv.baseToTCP()
+        print(tcp)
+        cart_values = tcp.cart_values()
         return prefix+axis_values+cart_values
+    
+
+# handles the data received from the GUI and sets up data for sending
+def handleData(data):
+    # split data string
+    data_arr = data.split("#")
+    
+    # check if GUI requests the current robot axis values as well as current orientation and position 
+    if data_arr[0] == 'GET':
+        return assembleValueString()
     
     # check if the robot should be moved 
     elif data_arr[0] == 'MOV':
@@ -77,14 +84,7 @@ def handleData(data):
         
         # send new information about the robot's axis values, position and orientation to the GUI for updating purpose
         # prefix for parsing
-        prefix = "VAL#"
-        # get Axis values
-        axis_arr = robot.GetDOFValues()
-        # convert to string
-        axis_values = str(axis_arr[0])+";"+str(axis_arr[1])+";"+str(axis_arr[2])+";"+str(axis_arr[3])+";"+str(axis_arr[4])+";"+str(axis_arr[5])+'#'
-        # adding dummy values for orientation and position (you need to compute the values)
-        cart_values = "0;0;0;0;0;0"     
-        return prefix+axis_values+cart_values
+        return assembleValueString()
     
     # check if inverse kinematics should be calculated
     if data_arr[0] == "CAL":

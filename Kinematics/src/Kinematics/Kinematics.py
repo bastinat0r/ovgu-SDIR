@@ -10,12 +10,6 @@ def sind(angle):
     """sine of angle in degree"""
     return math.sin(math.radians(angle))
 
-
-
-
-def direct_kinematics(theta_1, theta_2, theta_3, theta_4, theta_5, theta_6):
-    return t01 * t12 * t23 * t34 * t45 * t5TCP
-
 class JointSpaceVector(object):
     def __init__(self, angles=[0,0,0,0,0,0]):
         self.angles = angles
@@ -119,10 +113,19 @@ class Transformation(object):
 
     def position(self):
         """ return the positional part of the transformation as a vector """
-        return [ self.matrix[0][3], self.matrix[1][3], self.matrix[2][3]  ]
+        return [ self.matrix[0][3], self.matrix[1][3], self.matrix[2][3] , 0, 0, 0 ]
 
     def __str__(self):
         return str(self.matrix)
+    
+    def cart_values(self):
+        cv = str(self.position()[0]) + ";"
+        cv = cv + str(self.position()[1]) + ";"
+        cv = cv + str(self.position()[2]) + ";"
+        cv = cv + str(self.position()[3]) + ";"
+        cv = cv + str(self.position()[4]) + ";"
+        cv = cv + str(self.position()[5])
+        return cv
 
 class TestDirectKinematics(unittest.TestCase):
     def testNullTransformation(self):
