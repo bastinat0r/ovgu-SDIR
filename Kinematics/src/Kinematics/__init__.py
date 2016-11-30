@@ -44,18 +44,18 @@ def dataTransfer():
     
 
 def assembleValueString():
-        # prefix for parsing
-        prefix = "VAL#"
-        # get Axis values
-        axis_arr = robot.GetDOFValues()
-        # convert to string
-        axis_values = str(axis_arr[0])+";"+str(axis_arr[1])+";"+str(axis_arr[2])+";"+str(axis_arr[3])+";"+str(axis_arr[4])+";"+str(axis_arr[5])+'#'
-        # adding dummy values for orientation and position (you need to compute the values)
-        jsv = kin.JointSpaceVector(axis_arr)
-        tcp = jsv.baseToTCP()
-        print(tcp)
-        cart_values = tcp.cart_values()
-        return prefix+axis_values+cart_values
+    # prefix for parsing
+    prefix = "VAL#"
+    # get Axis values
+    axis_arr = robot.GetDOFValues()
+    # convert to string
+    axis_values = str(axis_arr[0])+";"+str(axis_arr[1])+";"+str(axis_arr[2])+";"+str(axis_arr[3])+";"+str(axis_arr[4])+";"+str(axis_arr[5])+'#'
+    # adding dummy values for orientation and position (you need to compute the values)
+    jsv = kin.JointSpaceVector(axis_arr)
+    tcp = jsv.baseToTCP()
+    print(tcp)
+    cart_values = tcp.cart_values()
+    return prefix+axis_values+cart_values
     
 
 # handles the data received from the GUI and sets up data for sending
