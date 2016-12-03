@@ -119,10 +119,10 @@ class Transformation(object):
 
     def position(self):
         """ return the positional part of the transformation as a vector """
-        beta = atan2(self.matrix[2][0], math.sqrt(self.matrix[0][0]^2 + self.matrix[1,0]^2))
+        beta = math.atan2(self.matrix[2][0], math.sqrt(self.matrix[0][0]**2 + self.matrix[1,0]**2))
         cbeta = math.cos(beta)
-        alpha = atan2(self.matrix[1][0] / cbeta, self.matrix[0][0] / cbeta)
-        gamma = atan2(self.matrix[2][1] / cbeta, self.matrix[2][2] / cbeta)
+        alpha = math.atan2(self.matrix[1][0] / cbeta, self.matrix[0][0] / cbeta)
+        gamma = math.atan2(self.matrix[2][1] / cbeta, self.matrix[2][2] / cbeta)
         return [ self.matrix[0][3], self.matrix[1][3], self.matrix[2][3] , math.degrees(alpha), math.degrees(beta), math.degrees(gamma)]
 
     def __str__(self):
