@@ -2,6 +2,8 @@ import numpy as np
 import math
 import unittest
 
+
+
 def cosd(angle):
     """cosine of angle in degree"""
     return math.cos(math.radians(angle))
@@ -11,29 +13,33 @@ def sind(angle):
     return math.sin(math.radians(angle))
 
 class JointSpaceVector(object):
+
     def __init__(self, angles=[0,0,0,0,0,0]):
         self.angles = angles
+        self.DH_PARAM_A=[260, 680, -35, 0, 0, 0, 0]
+        self.DH_PARAM_D=[-675, 0, 0, -670, 0, -115, -670]
+        self.DH_PARAM_ALPHA=[90, 0, 90, -90, 90, 0, 0]
 
     def t01(self):
-        return Transformation(alpha=90,   a=260,  theta=self.angles[0],     d=-675)
+        return Transformation(alpha=self.DH_PARAM_ALPHA[0], a=self.DH_PARAM_A[0], theta=self.angles[0], d=self.DH_PARAM_D[0])
 
     def t12(self):
-        return Transformation(alpha=0,    a=680,  theta=self.angles[1],     d=0)
+        return Transformation(alpha=self.DH_PARAM_ALPHA[1], a=self.DH_PARAM_A[1], theta=self.angles[1], d=self.DH_PARAM_D[1])
 
     def t23(self):
-        return Transformation(alpha=90,   a=-35,  theta=self.angles[2],     d=0)
+        return Transformation(alpha=self.DH_PARAM_ALPHA[2], a=self.DH_PARAM_A[2], theta=self.angles[2], d=self.DH_PARAM_D[2])
 
     def t34(self):
-        return Transformation(alpha=-90,  a=0,    theta=self.angles[3],     d=-670)
+        return Transformation(alpha=self.DH_PARAM_ALPHA[3], a=self.DH_PARAM_A[3], theta=self.angles[3], d=self.DH_PARAM_D[3])
 
     def t45(self):
-        return Transformation(alpha=90,   a=0,    theta=self.angles[4],     d=0)
+        return Transformation(alpha=self.DH_PARAM_ALPHA[4], a=self.DH_PARAM_A[4], theta=self.angles[4], d=self.DH_PARAM_D[4])
     
     def t5TCP(self):
-        return Transformation(alpha=0,  a=0,    theta=self.angles[5],     d=-115)
+        return Transformation(alpha=self.DH_PARAM_ALPHA[5], a=self.DH_PARAM_A[5], theta=self.angles[5], d=self.DH_PARAM_D[5])
 
     def t3WCP(self):
-        return Transformation(alpha=0,  a=0,    theta=0,     d=-670)
+        return Transformation(alpha=self.DH_PARAM_ALPHA[6], a=self.DH_PARAM_A[6], theta=0,              d=self.DH_PARAM_D[6])
 
 
 
@@ -134,6 +140,9 @@ class Transformation(object):
 class TestDirectKinematics(unittest.TestCase):
     def testNullTransformation(self):
         nullTransformation=JointSpaceVector(angles=[0,0,-90,0,0,0])
+        nullTransformation.DH_PARAM_A=[260, 680, -35, 0, 0, 0, 0]
+        nullTransformation.DH_PARAM_D=[-675, 0, 0, -670, 0, -115, -670]
+        nullTransformation.DH_PARAM_ALPHA=[90, 0, 90, -90, 90, 0, 0]
         desired_result = np.array([
             [.0,.0,-1.0,1725.0],
             [.0,-1.0,.0,.0],
@@ -143,6 +152,9 @@ class TestDirectKinematics(unittest.TestCase):
 
     def testStandartTransformation(self):
         nullTransformation=JointSpaceVector(angles=[0,-90,0,0,0,0])
+        nullTransformation.DH_PARAM_A=[260, 680, -35, 0, 0, 0, 0]
+        nullTransformation.DH_PARAM_D=[-675, 0, 0, -670, 0, -115, -670]
+        nullTransformation.DH_PARAM_ALPHA=[90, 0, 90, -90, 90, 0, 0]
         desired_result = np.array([
             [.0,.0,-1.0,1045.0],
             [.0,-1.0,.0,.0],
@@ -152,6 +164,9 @@ class TestDirectKinematics(unittest.TestCase):
 
     def testStraightTransformation(self):
         nullTransformation=JointSpaceVector(angles=[0,-90,-90,-90,0,0])
+        nullTransformation.DH_PARAM_A=[260, 680, -35, 0, 0, 0, 0]
+        nullTransformation.DH_PARAM_D=[-675, 0, 0, -670, 0, -115, -670]
+        nullTransformation.DH_PARAM_ALPHA=[90, 0, 90, -90, 90, 0, 0]
         desired_result = np.array([
             [.0,-1.0,.0,295.0],
             [1.0,.0,.0,.0],
