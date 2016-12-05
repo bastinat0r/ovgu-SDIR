@@ -131,17 +131,18 @@ class Transformation(object):
         return str(self.matrix)
     
     def cart_values(self):
-        cv = str(self.position()[0]) + ";"
-        cv = cv + str(self.position()[1]) + ";"
-        cv = cv + str(self.position()[2]) + ";"
-        cv = cv + str(self.position()[3]) + ";"
-        cv = cv + str(self.position()[4]) + ";"
-        cv = cv + str(self.position()[5])
+        cv = "%.2f;" % self.position()[0]
+        cv = cv + "%.2f;" % self.position()[1]
+        cv = cv + "%.2f;" % self.position()[2]
+        cv = cv + "%.2f;" % self.position()[3]
+        cv = cv + "%.2f;" % self.position()[4]
+        cv = cv + "%.2f;" % self.position()[5]
+        print(cv)
         return cv
 
 class TestDirectKinematics(unittest.TestCase):
     def testNullTransformation(self):
-        nullTransformation=JointSpaceVector(angles=[0,0,-90,0,0,0])
+        nullTransformation=JointSpaceVector(angles=[0,-90,-90,0,0,0])
         nullTransformation.DH_PARAM_A=[260, 680, -35, 0, 0, 0, 0]
         nullTransformation.DH_PARAM_D=[-675, 0, 0, -670, 0, -115, -670]
         nullTransformation.DH_PARAM_ALPHA=[90, 0, 90, -90, 90, 0, 0]
