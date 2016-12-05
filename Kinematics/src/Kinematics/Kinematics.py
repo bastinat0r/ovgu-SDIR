@@ -16,19 +16,17 @@ class JointSpaceVector(object):
 
     def __init__(self, angles=[0,0,0,0,0,0]):
         self.angles = angles
-        self.DH_PARAM_A=[260, 680, -35, 0, 0, 0, 0]
-        self.DH_PARAM_D=[-675, 0, 0, -670, 0, -115, -670]
-        self.DH_PARAM_ALPHA=[90, 0, 90, -90, 90, 0, 0]
+        self.DH_PARAM_D = [-815,        0,              0,          -1545,      0,          -158]   #d
+        self.DH_PARAM_A = [350,         1200,           145,        0,          0,          0]      #a
+        self.DH_PARAM_ALPHA  = [-90,    0,              -90,   90,    -90,   0]      #Alpha
 
-        self.DH_PARAM_A=    [0,    0.35,  0.35,  0.35, 3.35, 1.895, 1.895]
-        self.DH_PARAM_D=    [0,    0.815, 2.015, 2.16, 2.16, 2.16,  0]
-        self.DH_PARAM_ALPHA=[-180, 90,    90,    90,   90,   90,    90]
+
 
     def t01(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[0], a=self.DH_PARAM_A[0], theta=self.angles[0], d=self.DH_PARAM_D[0])
 
     def t12(self):
-        return Transformation(alpha=self.DH_PARAM_ALPHA[1], a=self.DH_PARAM_A[1], theta=self.angles[1], d=self.DH_PARAM_D[1])
+        return Transformation(alpha=self.DH_PARAM_ALPHA[1], a=self.DH_PARAM_A[1], theta=self.angles[1]+90, d=self.DH_PARAM_D[1])
 
     def t23(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[2], a=self.DH_PARAM_A[2], theta=self.angles[2], d=self.DH_PARAM_D[2])
