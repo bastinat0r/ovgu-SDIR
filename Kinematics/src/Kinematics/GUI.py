@@ -155,6 +155,7 @@ class GUI(QtGui.QWidget):
         self.radio_asynch = QtGui.QRadioButton('asynchronous', self)
         self.radio_asynch.setChecked(True)
         self.radio_synch = QtGui.QRadioButton('synchronous', self)
+        self.radio_linear = QtGui.QRadioButton('linear', self)
         # set up button for the calculation
         self.button_move = QtGui.QPushButton('Move', self)
         # trigger function on clicked
@@ -169,6 +170,7 @@ class GUI(QtGui.QWidget):
         grid_ptp.addWidget(self.radio_synch, 1, 2)
         grid_ptp.addWidget(label_ptp_a3, 2, 0)
         grid_ptp.addWidget(self.lineedit_ptp_a3, 2, 1)
+        grid_ptp.addWidget(self.radio_linear, 2, 2)
         grid_ptp.addWidget(label_ptp_a4, 3, 0)
         grid_ptp.addWidget(self.lineedit_ptp_a4, 3, 1)
         grid_ptp.addWidget(label_ptp_a5, 4, 0)
@@ -253,6 +255,8 @@ class GUI(QtGui.QWidget):
             motion_type = "#A"
         elif self.radio_synch.isChecked() is True:
             motion_type = "#S"
+        elif self.radio_linear.isChecked() is True:
+            motion_type = "#L"
 
         # send data
         self.dataTransfer(prefix+msg+motion_type)
