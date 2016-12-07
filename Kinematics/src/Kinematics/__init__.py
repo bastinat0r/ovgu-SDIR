@@ -67,18 +67,20 @@ def handleData(data):
     if data_arr[0] == 'GET':
         return assembleValueString()
     
-    # check if the robot should be moved 
     elif data_arr[0] == 'MOV':
         # get values
         values = data_arr[1].split(';')
         # convert from string to float and save in numpy array
-        target = np.array([float(values[0]), float(values[1]), float(values[2]), float(values[3]), float(values[4]), float(values[5])])
+        target = np.array([math.radians(float(values[0])), math.radians(float(values[1])), math.radians(float(values[2])), math.radians(float(values[3])), math.radians(float(values[4])), math.radians(float(values[5]))])
                 
         # get the motion type
         motion_type = data_arr[2]
         
         # get trajectory
-        trajectory = mf.PTPtoConfiguration(robot.GetDOFValues(), target, motion_type)
+        if motion_type == 'L':
+            True #placeholder
+        else:
+            trajectory = mf.PTPtoConfiguration(robot.GetDOFValues(), target, motion_type)
         # move robot
         mf.Move(robot, trajectory)
         
@@ -107,4 +109,5 @@ if __name__ == "__main__":
     env.SetViewer('qtcoin') # attach viewer (optional)
     env.Load('../../MyData/MyEnvironment/MyEnv.xml') # load a simple scene
     robot = env.GetRobots()[0] # get the first robot
+    mf.setLimits(robot)
     dataTransfer()
