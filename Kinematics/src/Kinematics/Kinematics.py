@@ -6,11 +6,11 @@ import unittest
 
 def cosd(angle):
     """cosine of angle in degree"""
-    return math.cos(math.radians(angle))
+    return math.cos(angle)
 
 def sind(angle):
     """sine of angle in degree"""
-    return math.sin(math.radians(angle))
+    return math.sin(angle)
 
 class JointSpaceVector(object):
 
@@ -18,7 +18,7 @@ class JointSpaceVector(object):
         self.angles = angles
         self.DH_PARAM_D = [-815,        0,              0,          -1545,      0,          -158]   #d
         self.DH_PARAM_A = [350,         1200,           145,        0,          0,          0]      #a
-        self.DH_PARAM_ALPHA  = [-90,    0,              -90,   90,    -90,   0]      #Alpha
+        self.DH_PARAM_ALPHA  = [math.radians(-90),    0,              math.radians(-90),   math.radians(90),    math.radians(-90),   0]      #Alpha
 
 
 
@@ -26,7 +26,7 @@ class JointSpaceVector(object):
         return Transformation(alpha=self.DH_PARAM_ALPHA[0], a=self.DH_PARAM_A[0], theta=self.angles[0], d=self.DH_PARAM_D[0])
 
     def t12(self):
-        return Transformation(alpha=self.DH_PARAM_ALPHA[1], a=self.DH_PARAM_A[1], theta=self.angles[1]+90, d=self.DH_PARAM_D[1])
+        return Transformation(alpha=self.DH_PARAM_ALPHA[1], a=self.DH_PARAM_A[1], theta=self.angles[1]+math.radians(90), d=self.DH_PARAM_D[1])
 
     def t23(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[2], a=self.DH_PARAM_A[2], theta=self.angles[2], d=self.DH_PARAM_D[2])
@@ -40,18 +40,13 @@ class JointSpaceVector(object):
     def t5TCP(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[5], a=self.DH_PARAM_A[5], theta=self.angles[5], d=self.DH_PARAM_D[5])
 
-    def t3WCP(self):
-        return Transformation(alpha=self.DH_PARAM_ALPHA[6], a=self.DH_PARAM_A[6], theta=0,              d=self.DH_PARAM_D[6])
-
-
-
-    def wristCenterPointTransformation(self):
-        return self.t01() * self.t12() * self.t23() * self.t3WCP()
-
-    def wristToTCPTransformation(self):
-        return self.t34() * self.t45() * self.t5TCP()
 
     def baseToTCP(self):
+        print(self.angles)
+        print("t01:")
+        print("%s" %(str(self.t01())))
+        print("t12:")
+        print("%s" %(str(self.t01() * self.t12())))
         return self.t01() * self.t12() * self.t23() * self.t34() * self.t45() * self.t5TCP()
 
 
