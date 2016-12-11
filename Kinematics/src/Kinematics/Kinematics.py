@@ -28,6 +28,13 @@ class JointSpaceVector(object):
     def t34(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[3], a=self.DH_PARAM_A[3], theta=self.angles[3], d=self.DH_PARAM_D[3])
 
+    # split up t34 as tz * rotz * tx * rotx as t3WRIST * tWRIST4
+    def t3WRIST(self):
+        return Transformation(alpha=0, a=0, theta=0, d=self.DH_PARAM_D[3])
+
+    def tWRIST4(self):
+        return Transformation(alpha=self.DH_PARAM_ALPHA[3], a=self.DH_PARAM_A[3], theta=self.angles[3], d=0)
+
     def t45(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[4], a=self.DH_PARAM_A[4], theta=self.angles[4], d=self.DH_PARAM_D[4])
     
@@ -37,15 +44,14 @@ class JointSpaceVector(object):
     def t6TCP(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[6], a=self.DH_PARAM_A[6], theta=0, d=self.DH_PARAM_D[6])
 
-
     def baseToTCP(self):
         return self.t01() * self.t12() * self.t23() * self.t34() * self.t45() * self.t56() * self.t6TCP()
 
     def baseToWrist(self):
-        return self.t01() * self.t12() * self.t23()
+        return self.t01() * self.t12() * self.t23() * self.t3WRIST()
 
     def wristToPose(self):
-        return self.t34() * self.t45() * self.t56()
+        return self.tWRIST4() * self.t45() * self.t56()
 
 
 
