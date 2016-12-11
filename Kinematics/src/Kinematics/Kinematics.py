@@ -1,24 +1,18 @@
 import numpy as np
 import math
 import unittest
+from math import sin
+from math import cos
 
 
-
-def cosd(angle):
-    """cosine of angle in degree"""
-    return math.cos(angle)
-
-def sind(angle):
-    """sine of angle in degree"""
-    return math.sin(angle)
 
 class JointSpaceVector(object):
 
     def __init__(self, angles=[0,0,0,0,0,0]):
         self.angles = angles
-        self.DH_PARAM_D = [-815,        0,              0,          -1545,      0,          -158]   #d
-        self.DH_PARAM_A = [350,         1200,           145,        0,          0,          0]      #a
-        self.DH_PARAM_ALPHA  = [math.radians(-90),    0,              math.radians(-90),   math.radians(90),    math.radians(-90),   0]      #Alpha
+        self.DH_PARAM_D = [-815,        0,              0,          -1545,      0,          0, -158]   #d
+        self.DH_PARAM_A = [350,         1200,           145,        0,          0,          0, 0]      #a
+        self.DH_PARAM_ALPHA  = [math.radians(-90),    0,              math.radians(-90),   math.radians(90),    math.radians(-90),   0, 0]      #Alpha
 
 
 
@@ -37,17 +31,22 @@ class JointSpaceVector(object):
     def t45(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[4], a=self.DH_PARAM_A[4], theta=self.angles[4], d=self.DH_PARAM_D[4])
     
-    def t5TCP(self):
+    def t56(self):
         return Transformation(alpha=self.DH_PARAM_ALPHA[5], a=self.DH_PARAM_A[5], theta=self.angles[5], d=self.DH_PARAM_D[5])
+
+    def t6TCP(self):
+        return Transformation(alpha=self.DH_PARAM_ALPHA[6], a=self.DH_PARAM_A[6], theta=0, d=self.DH_PARAM_D[6])
 
 
     def baseToTCP(self):
-        print(self.angles)
-        print("t01:")
-        print("%s" %(str(self.t01())))
-        print("t12:")
-        print("%s" %(str(self.t01() * self.t12())))
-        return self.t01() * self.t12() * self.t23() * self.t34() * self.t45() * self.t5TCP()
+        return self.t01() * self.t12() * self.t23() * self.t34() * self.t45() * self.t56() * self.t6TCP()
+
+    def baseToWrist(self):
+        return self.t01() * self.t12() * self.t23()
+
+    def wristToPose(self):
+        return self.t34() * self.t45() * self.t56()
+
 
 
 class Transformation(object):
@@ -55,8 +54,9 @@ class Transformation(object):
     def __init__(self, matrix=np.eye(4,4,dtype=np.float64), a=0, d=0, alpha=0, theta=0):
         self.matrix = matrix
         self.rotate_x(alpha) # because we start from the right side
-        self.translate([a, 0, d])
+        self.translate([a, 0, 0])
         self.rotate_z(theta)
+        self.translate([0, 0, d])
 
     def rotate(self, axis, angle="0"):
         """ rotate given translation by given axis and angle """
@@ -85,30 +85,30 @@ class Transformation(object):
     def rotate_x(self, angle):
         """ rotate around the x axis """
         transform = np.eye(4, 4,dtype=np.float64)
-        transform[1][1] = cosd(angle)
-        transform[1][2] = -1 * sind(angle)
-        transform[2][1] = sind(angle)
-        transform[2][2] = cosd(angle)
+        transform[1][1] = cos(angle)
+        transform[1][2] = -1 * sin(angle)
+        transform[2][1] = sin(angle)
+        transform[2][2] = cos(angle)
         return self.transform(transform)
 
 
     def rotate_y(self, angle):
         """ rotate around the y axis """
         transform = np.eye(4, 4,dtype=np.float64)
-        transform[0][0] = cosd(angle)
-        transform[0][2] = -1 * sind(angle)
-        transform[2][0] = sind(angle)
-        transform[2][2] = cosd(angle)
+        transform[0][0] = cos(angle)
+        transform[0][2] = -1 * sin(angle)
+        transform[2][0] = sin(angle)
+        transform[2][2] = cos(angle)
         return self.transform(transform)
 
 
     def rotate_z(self, angle):
         """ rotate around the z axis """
         transform = np.eye(4, 4,dtype=np.float64)
-        transform[0][0] = cosd(angle)
-        transform[0][1] = -1 * sind(angle)
-        transform[1][0] = sind(angle)
-        transform[1][1] = cosd(angle)
+        transform[0][0] = cos(angle)
+        transform[0][1] = -1 * sin(angle)
+        transform[1][0] = sin(angle)
+        transform[1][1] = cos(angle)
         return self.transform(transform)
 
     def __mul__(self, other):
@@ -134,6 +134,25 @@ class Transformation(object):
         cv = cv + "%.2f;" % self.position()[5]
         print(cv)
         return cv
+
+    def inv(self):
+        inverse = np.matrix(self.matrix).getI()
+        return Transformation(matrix=inverse)
+
+    def getWristJoints(self):
+        print("position 0 of matrix should be 0, got: %.2f;" % self.matrix[3][0])
+        print("position 1 of matrix should be 0, got: %.2f;" % self.matrix[3][1])
+        print("position 2 of matrix should be 0, got: %.2f;" % self.matrix[3][2])
+
+        theta5 = np.arccos(self.matrix[2][2])
+        theta4 = np.arctan2(self.matrix[1][2], self.matrix[0][2])
+        theta6 = np.arctan2(self.matrix[2][1], self.matrix[2][0])
+        solution1 = [theta4, theta5, theta6]
+# you get solution 2 by inverting solution 1
+        solution2 = [theta4+math.pi, -1 * theta5, theta6 + math.pi]
+        return (solution1, solution2)
+
+
 
 class TestDirectKinematics(unittest.TestCase):
     def testNullTransformation(self):
@@ -174,6 +193,6 @@ class TestDirectKinematics(unittest.TestCase):
 
 
 
-
 if __name__ == '__main__':
-    unittest.main()
+    pass
+    #unittest.main()
