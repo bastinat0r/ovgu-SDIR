@@ -142,7 +142,7 @@ class Transformation(object):
         return cv
 
     def inv(self):
-        inverse = np.matrix(self.matrix).getI()
+        inverse = np.linalg.inv(self.matrix)
         return Transformation(matrix=inverse)
 
     def getWristJoints(self):
