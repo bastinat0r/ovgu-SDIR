@@ -126,7 +126,7 @@ class Transformation(object):
         cbeta = math.cos(beta)
         alpha = math.atan2(self.matrix[1][0] / cbeta, self.matrix[0][0] / cbeta)
         gamma = math.atan2(self.matrix[2][1] / cbeta, self.matrix[2][2] / cbeta)
-        return [ self.matrix[0][3], self.matrix[1][3], self.matrix[2][3] , math.degrees(alpha), math.degrees(beta), math.degrees(gamma)]
+        return ( self.matrix[0][3], self.matrix[1][3], self.matrix[2][3], alpha, beta, gamma )
 
     def __str__(self):
         return str(self.matrix)
@@ -135,9 +135,9 @@ class Transformation(object):
         cv = "%.2f;" % self.position()[0]
         cv = cv + "%.2f;" % self.position()[1]
         cv = cv + "%.2f;" % self.position()[2]
-        cv = cv + "%.2f;" % self.position()[3]
-        cv = cv + "%.2f;" % self.position()[4]
-        cv = cv + "%.2f;" % self.position()[5]
+        cv = cv + "%.2f;" % np.rad2deg(self.position()[3])
+        cv = cv + "%.2f;" % np.rad2deg(self.position()[4])
+        cv = cv + "%.2f;" % np.rad2deg(self.position()[5])
         print(cv)
         return cv
 
