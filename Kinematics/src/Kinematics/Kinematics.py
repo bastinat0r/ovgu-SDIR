@@ -164,7 +164,7 @@ class Transformation(object):
         solution2 = (theta4+math.pi, -1 * theta5, theta6 + math.pi)
         return [solution1, solution2]
 
-    def getJointVector(self):
+    def getJointVectors(self):
         """computes the inverse kinematics for this transformation"""
         wcp = self * JointSpaceVector().t6TCP().inv()
         arr = wcp.position()[0:3]
@@ -177,6 +177,9 @@ class Transformation(object):
             ret = ret + [JointSpaceVector(angles=p+wristJoints[0])]
             ret = ret + [JointSpaceVector(angles=p+wristJoints[1])]
         return ret
+
+    def getIKSolutions(self):
+        return self.getJointVectors()
 
 
 def calcAngles(arr):
