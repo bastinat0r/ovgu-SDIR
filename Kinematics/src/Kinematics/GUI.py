@@ -326,6 +326,8 @@ class GUI(QtGui.QWidget):
     
     # update UI with multiple inverse kinematic solutions
     def updateINK(self, data):
+        print("========================")
+        print(data[1])
         self.lineedit_cartptp_box.setText(data[1])
     
     
