@@ -1,9 +1,10 @@
+from __future__ import division
 import numpy as np
 import math
 import unittest
 from math import sin
 from math import cos
-
+import math
 
 
 class JointSpaceVector(object):
@@ -162,6 +163,88 @@ class Transformation(object):
 # you get solution 2 by inverting solution 1
         solution2 = (theta4+math.pi, -1 * theta5, theta6 + math.pi)
         return [solution1, solution2]
+
+    def getJointVector(self):
+        """computes the inverse kinematics for this transformation"""
+        wcp = self * JointSpaceVector().t6TCP().inv()
+        arr = wcp.position()[0:3]
+        position_solutions = calcAngles(arr)
+        ret = []
+        for p in position_solutions:
+            jsv = JointSpaceVector(angles=p+(0,0,0))
+            wristTransformation = jsv.baseToWrist().inv() * self * jsv.t6TCP().inv()
+            wristJoints = wristTransformation.getWristJoints()
+            ret = ret + [JointSpaceVector(angles=p+wristJoints[0])]
+            ret = ret + [JointSpaceVector(angles=p+wristJoints[1])]
+        return ret
+
+
+def calcAngles(arr):
+    """ arr: position vector """
+    #calc Rz
+    #calc P
+    # -> calc wc
+    #w_c = getWc(p, r)
+    a1 = getPhy1(arr[0],arr[1])
+    a2 = getPhy2(arr[0],arr[1],arr[2])
+    a3 = getPhy3(arr[0],arr[1],arr[2])
+    
+    s1 = (a1[0], a2[0], a3[0])
+    s2 = (a1[0], a2[1], a3[1])
+    s3 = (a1[1], a2[2], a3[2])
+    s4 = (a1[1], a2[3], a3[3])
+
+    return [s1, s2, s3, s4]
+
+DH_PARAM_D = JointSpaceVector().DH_PARAM_D
+DH_PARAM_A = JointSpaceVector().DH_PARAM_A
+DH_PARAM_ALPHA = JointSpaceVector().DH_PARAM_ALPHA
+
+def getPhy1(x,y):
+    phy1_sol1 = math.atan2(y, x)                #front elbow
+    phy1_sol2 = math.atan2(y, x) + math.pi      #rear elbow
+    return [phy1_sol1, phy1_sol2]
+
+def getPhy2(x, y, z):
+    xy = getHypot(x,y)
+    d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
+    dFront = getDFront(xy,z)
+    dRear = getDRear(xy,z)
+    gamma = math.atan((z - DH_PARAM_D[0]) / (xy - DH_PARAM_A[0]))
+    betaFront = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dFront**2)) / (2 * DH_PARAM_A[1] * dFront))
+    betaRear = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dRear**2)) / (2 * DH_PARAM_A[1] * dRear))
+                     
+    phy2_sol1 = - (betaFront + gamma)           #front elbow up
+    phy2_sol2 = - (betaFront - gamma)           #front elbow down
+    phy2_sol3 = math.pi + betaRear + gamma      #rear elbow up
+    phy2_sol4 = math.pi + betaRear - gamma      #rear elbow down
+    return [phy2_sol1, phy2_sol2, phy2_sol3, phy2_sol4]
+
+def getPhy3(x, y, z):
+    xy = getHypot(x,y)
+    d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
+    dFront = getDFront(xy,z)
+    dRear = getDRear(xy,z)
+    delta = math.atan(DH_PARAM_D[3] / DH_PARAM_A[2])
+    epsilonFront = math.acos((-(dFront)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
+    epsilonRear = math.acos((-(dRear)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
+    
+    phy3_sol1 = (math.pi * 3 / 2) - delta - epsilonFront        #front elbow up
+    phy3_sol2 = - ((math.pi / 2) + epsilonFront - delta)        #front elbow down
+    phy3_sol3 = (math.pi / 2) - epsilonRear + delta             #rear elbow up
+    phy3_sol4 = - ((math.pi * 3 / 2) - delta - epsilonRear)     #rear elbow down
+    return [phy3_sol1, phy3_sol2, phy3_sol3, phy3_sol4]
+
+def getDFront(xy, z):
+    d = math.sqrt((xy - DH_PARAM_A[0])**2 + (z - DH_PARAM_D[0])**2)
+    return d
+
+def getDRear(xy, z):
+    d = math.sqrt((xy + DH_PARAM_A[0])**2 + (z - DH_PARAM_D[0])**2)
+    return d
+
+def getHypot(a, b):
+    return math.sqrt(a**2 + b**2)
 
 
 
