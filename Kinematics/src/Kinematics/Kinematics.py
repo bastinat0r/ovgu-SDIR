@@ -217,13 +217,13 @@ def getPhy2(x, y, z):
     dFront = getDFront(xy,z)
     dRear = getDRear(xy,z)
     gamma = math.atan((z - DH_PARAM_D[0]) / (xy - DH_PARAM_A[0]))
-    betaFront = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dFront**2)) / (2 * DH_PARAM_A[1] * dFront))
-    betaRear = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dRear**2)) / (2 * DH_PARAM_A[1] * dRear))
+    betaFront = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dFront**2)) / (2.0 * DH_PARAM_A[1] * dFront))
+    betaRear = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dRear**2)) / (2.0 * DH_PARAM_A[1] * dRear))
                      
-    phy2_sol1 = (betaFront + gamma) - (math.pi/2)       #front elbow up
-    phy2_sol2 = (gamma - betaFront) - (math.pi/2)       #front elbow down
-    phy2_sol3 = math.pi/2 - (betaRear + gamma)          #rear elbow up
-    phy2_sol4 = math.pi/2 - (gamma - betaRear)          #rear elbow down
+    phy2_sol1 = (betaFront + gamma) - (math.pi/2.0)       #front elbow up
+    phy2_sol2 = (gamma - betaFront) - (math.pi/2.0)       #front elbow down
+    phy2_sol3 = math.pi/2.0 - (betaRear + gamma)          #rear elbow up
+    phy2_sol4 = math.pi/2.0 - (gamma - betaRear)          #rear elbow down
     return [phy2_sol1, phy2_sol2, phy2_sol3, phy2_sol4]
 
 def getPhy3(x, y, z):
@@ -232,12 +232,12 @@ def getPhy3(x, y, z):
     dFront = getDFront(xy,z)
     dRear = getDRear(xy,z)
     delta = math.atan(DH_PARAM_D[3] / DH_PARAM_A[2])
-    epsilonFront = math.acos((-(dFront)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
-    epsilonRear = math.acos((-(dRear)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
+    epsilonFront = math.acos((-(dFront)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2.0 * d34 * DH_PARAM_A[1]))
+    epsilonRear = math.acos((-(dRear)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2.0 * d34 * DH_PARAM_A[1]))
     
-    phy3_sol1 = delta + epsilonFront - math.pi                      #front elbow up
-    phy3_sol2 = math.pi - (epsilonFront - delta)                    #front elbow down
-    phy3_sol3 = (math.pi/2 - (epsilonRear - delta)) + math.pi/2     #rear elbow up
+    phy3_sol1 = delta + epsilonFront - math.pi                          #front elbow up
+    phy3_sol2 = math.pi - (epsilonFront - delta)                        #front elbow down
+    phy3_sol3 = (math.pi/2 - (epsilonRear - delta)) + (math.pi/2.0)     #rear elbow up
     phy3_sol4 = math.pi/2 - ((1.5 * math.pi) - delta - epsilonRear)     #rear elbow down
     return [phy3_sol1, phy3_sol2, phy3_sol3, phy3_sol4]
 
