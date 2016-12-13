@@ -93,15 +93,23 @@ def handleData(data):
     if data_arr[0] == "CAL":
         # get string with values
         values = data_arr[1].split(';')
+        print(values)
         
         # calculate inverse kinematic solution
+        trans = kin.Transformation()
+        trans.translate((float(values[0]), float(values[1]), float(values[2])))
+        trans.rotate_x(np.deg2rad(float(values[3])))
+        trans.rotate_y(np.deg2rad(float(values[4])))
+        trans.rotate_z(np.deg2rad(float(values[5])))
+        
+        print(trans.getIKSolutions())        
         
         # send the (multiple) solutions to the GUI
         # prefix for parsing
         prefix = "INK#"
         # adding dummy values (you need to replace them with the solutions)
-        ik_values = "0;0;0;0;0;0"
-        return prefix+ik_values
+        ik_values = [str(iks) for iks in trans.getIKSolutions()]
+        return prefix+"\n".join(ik_values)
     
     
 if __name__ == "__main__":

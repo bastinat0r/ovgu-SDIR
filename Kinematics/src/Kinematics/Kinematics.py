@@ -53,6 +53,9 @@ class JointSpaceVector(object):
 
     def wristToPose(self):
         return self.tWRIST4() * self.t45() * self.t56()
+    
+    def __str__(self):
+        return "(" + ", ".join(["%.2f" % a for a in self.angles]) + ")"
 
 
 
