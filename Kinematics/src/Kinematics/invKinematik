@@ -1,0 +1,100 @@
+from __future__ import division
+import numpy as np
+import math
+
+DH_PARAM_D = [-815, 
+              0,              
+              0,          
+              -1545,      
+              0, 
+              -158]   #d
+ 
+DH_PARAM_A = [350,         
+              1200,           
+              145,        
+              0,          
+              0, 
+              0]      #a
+
+DH_PARAM_ALPHA  = [math.radians(-90),    
+                   0,              
+                   math.radians(-90),   
+                   math.radians(90),    
+                   math.radians(-90),   
+                   0]      #Alpha
+
+def calcAngles(arr):
+    #calc Rz
+    #calc P
+    # -> calc wc
+    #w_c = getWc(p, r)
+    a1 = getPhy1(arr[0],arr[1])
+    a2 = getPhy2(arr[0],arr[1],arr[2])
+    a3 = getPhy3(arr[0],arr[1],arr[2])
+    
+    return [a1,a2,a3]
+
+def getWc(p, r):
+    return p - (DH_PARAM_D[5] * r)
+
+def getPhy1(x,y):
+    phy1_sol1 = math.atan2(y, x)                #front elbow
+    phy1_sol2 = math.atan2(y, x) + math.pi      #rear elbow
+    return [phy1_sol1, phy1_sol2]
+
+def getPhy2(x, y, z):
+    xy = getHypot(x,y)
+    d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
+    dFront = getDFront(xy,z)
+    dRear = getDRear(xy,z)
+    gamma = math.atan((z - DH_PARAM_D[0]) / (xy - DH_PARAM_A[0]))
+    betaFront = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dFront**2)) / (2 * DH_PARAM_A[1] * dFront))
+    betaRear = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dRear**2)) / (2 * DH_PARAM_A[1] * dRear))
+                     
+    phy2_sol1 = - (betaFront + gamma)           #front elbow up
+    phy2_sol2 = - (betaFront - gamma)           #front elbow down
+    phy2_sol3 = math.pi + betaRear + gamma      #rear elbow up
+    phy2_sol4 = math.pi + betaRear - gamma      #rear elbow down
+    return [phy2_sol1, phy2_sol2, phy2_sol3, phy2_sol4]
+
+def getPhy3(x, y, z):
+    xy = getHypot(x,y)
+    d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
+    dFront = getDFront(xy,z)
+    dRear = getDRear(xy,z)
+    delta = math.atan(DH_PARAM_D[3] / DH_PARAM_A[2])
+    epsilonFront = math.acos((-(dFront)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
+    epsilonRear = math.acos((-(dRear)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
+    
+    phy3_sol1 = (math.pi * 3 / 2) - delta - epsilonFront        #front elbow up
+    phy3_sol2 = - ((math.pi / 2) + epsilonFront - delta)        #front elbow down
+    phy3_sol3 = (math.pi / 2) - epsilonRear + delta             #rear elbow up
+    phy3_sol4 = - ((math.pi * 3 / 2) - delta - epsilonRear)     #rear elbow down
+    return [phy3_sol1, phy3_sol2, phy3_sol3, phy3_sol4]
+
+def getDFront(xy, z):
+    d = math.sqrt((xy - DH_PARAM_A[0])**2 + (z - DH_PARAM_D[0])**2)
+    return d
+
+def getDRear(xy, z):
+    d = math.sqrt((xy + DH_PARAM_A[0])**2 + (z - DH_PARAM_D[0])**2)
+    return d
+
+def getHypot(a, b):
+    return math.sqrt(a**2 + b**2)
+
+def testInv():
+    res1 = calcAngles([1249.09671093463,721.166322301983,861.159756184603])
+    print "Test 1:"
+    print np.degrees(res1[0])
+    print np.degrees(res1[1])
+    print np.degrees(res1[2])
+    
+    res2 = calcAngles([800.0,800.0,800.0])
+    print "Test 2:"
+    print np.degrees(res2[0])
+    print np.degrees(res2[1])
+    print np.degrees(res2[2])
+    
+if __name__ == '__main__':
+    testInv()
