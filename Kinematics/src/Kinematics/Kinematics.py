@@ -146,17 +146,22 @@ class Transformation(object):
         return Transformation(matrix=inverse)
 
     def getWristJoints(self):
-        print("position 0 of matrix should be 0, got: %.2f;" % self.matrix[3][0])
-        print("position 1 of matrix should be 0, got: %.2f;" % self.matrix[3][1])
-        print("position 2 of matrix should be 0, got: %.2f;" % self.matrix[3][2])
+        theta5 = -1 * np.arccos(self.matrix[2][2])
+# handle wrist singularity
+# just rotate the point a tiny little bit away, to get out of the singularity
+# the error we introduce is somewhere close to 1e-5 deg
+        if(theta5 == 0):
+            self.rotate_x(0.0000001)
+            self.rotate_y(0.0000001)
+            self.rotate_z(0.0000001)
 
         theta5 = -1 * np.arccos(self.matrix[2][2])
         theta4 = np.arctan2(self.matrix[1][2], self.matrix[0][2])
         theta6 = np.arctan2(self.matrix[2][1], -1 * self.matrix[2][0])
-        solution1 = [theta4, theta5, theta6]
+        solution1 = (theta4, theta5, theta6)
 # you get solution 2 by inverting solution 1
-        solution2 = [theta4+math.pi, -1 * theta5, theta6 + math.pi]
-        return (solution1, solution2)
+        solution2 = (theta4+math.pi, -1 * theta5, theta6 + math.pi)
+        return [solution1, solution2]
 
 
 
