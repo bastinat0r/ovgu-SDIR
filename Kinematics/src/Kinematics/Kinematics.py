@@ -190,6 +190,8 @@ class Transformation(object):
         """computes the inverse kinematics for this transformation"""
         wcp = self * JointSpaceVector().t6TCP().inv()
         arr = wcp.position()[0:3]
+        if(arr[1] == 0 and arr[2] == 0): #overhead singularity
+            arr[1] = 0.00000001
         position_solutions = calcAngles(arr)
         ret = []
         for p in position_solutions:
@@ -211,15 +213,32 @@ def calcAngles(arr):
     # -> calc wc
     #w_c = getWc(p, r)
     a1 = getPhy1(arr[0],arr[1])
-    a2 = getPhy2(arr[0],arr[1],arr[2])
-    a3 = getPhy3(arr[0],arr[1],arr[2])
+    solutions = []
     
-    s1 = (a1[0], a2[0], a3[0])
-    s2 = (a1[0], a2[1], a3[1])
-    s3 = (a1[1], a2[2], a3[2])
-    s4 = (a1[1], a2[3], a3[3])
+    # why is the try-catch here?
+    # if a given position is not within reach we will get an error here, but the programm shall continue to run (and propably give other solutions
+    try:
+        a2 = getPhy2(arr[0],arr[1],arr[2])
+        a3 = getPhy3(arr[0],arr[1],arr[2])
+        s1 = (a1[0], a2[0], a3[0])
+        s2 = (a1[0], a2[1], a3[1])
+        solutions.append(s1)
+        solutions.append(s2)
+    except ValueError:
+        print("couldn't compute front position values")
 
-    return [s1, s2, s3, s4]
+    try:
+        a2 = getPhy2Rear(arr[0],arr[1],arr[2])
+        a3 = getPhy3Rear(arr[0],arr[1],arr[2])
+        s1 = (a1[0], a2[0], a3[0])
+        s2 = (a1[0], a2[1], a3[1])
+        solutions.append(s1)
+        solutions.append(s2)
+    except ValueError:
+        print("couldn't compute rear position values")
+    
+
+    return solutions
 
 DH_PARAM_D = JointSpaceVector().DH_PARAM_D
 DH_PARAM_A = JointSpaceVector().DH_PARAM_A
@@ -234,31 +253,41 @@ def getPhy2(x, y, z):
     xy = getHypot(x,y)
     d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
     dFront = getDFront(xy,abs(z))
-    dRear = getDRear(xy,abs(z))
     gamma = math.atan((abs(z) - abs(DH_PARAM_D[0])) / (xy - DH_PARAM_A[0]))
     betaFront = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dFront**2)) / (2.0 * DH_PARAM_A[1] * dFront))
-    betaRear = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dRear**2)) / (2.0 * DH_PARAM_A[1] * dRear))
-                     
     phy2_sol1 = (betaFront + gamma) - (math.pi/2.0)       #front elbow up
     phy2_sol2 = (gamma - betaFront) - (math.pi/2.0)       #front elbow down
+    return [phy2_sol1, phy2_sol2]
+
+def getPhy2Rear(x, y, z):
+    xy = getHypot(x,y)
+    d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
+    dRear = getDRear(xy,abs(z))
+    gamma = math.atan((abs(z) - abs(DH_PARAM_D[0])) / (xy - DH_PARAM_A[0]))
+    betaRear = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dRear**2)) / (2.0 * DH_PARAM_A[1] * dRear))
     phy2_sol3 = math.pi/2.0 - (betaRear + gamma)          #rear elbow up
     phy2_sol4 = math.pi/2.0 - (gamma - betaRear)          #rear elbow down
-    return [phy2_sol1, phy2_sol2, phy2_sol3, phy2_sol4]
+    return [phy2_sol3, phy2_sol4]
 
 def getPhy3(x, y, z):
     xy = getHypot(x,y)
     d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
     dFront = getDFront(xy,abs(z))
-    dRear = getDRear(xy,abs(z))
     delta = math.atan(abs(DH_PARAM_D[3]) / DH_PARAM_A[2])
     epsilonFront = math.acos((-(dFront)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2.0 * d34 * DH_PARAM_A[1]))
-    epsilonRear = math.acos((-(dRear)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2.0 * d34 * DH_PARAM_A[1]))
-    
     phy3_sol1 = delta + epsilonFront - math.pi                          #front elbow up
     phy3_sol2 = math.pi - (epsilonFront - delta)                        #front elbow down
+    return [phy3_sol1, phy3_sol2]
+
+def getPhy3Rear(x, y, z):
+    xy = getHypot(x,y)
+    d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
+    dRear = getDRear(xy,abs(z))
+    delta = math.atan(abs(DH_PARAM_D[3]) / DH_PARAM_A[2])
+    epsilonRear = math.acos((-(dRear)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2.0 * d34 * DH_PARAM_A[1]))
     phy3_sol3 = (math.pi/2 - (epsilonRear - delta)) + (math.pi/2.0)     #rear elbow up
     phy3_sol4 = math.pi/2 - ((1.5 * math.pi) - delta - epsilonRear)     #rear elbow down
-    return [phy3_sol1, phy3_sol2, phy3_sol3, phy3_sol4]
+    return [phy3_sol3, phy3_sol4]
 
 def getDFront(xy, z):
     d = math.sqrt((xy - DH_PARAM_A[0])**2 + (abs(z) - abs(DH_PARAM_D[0]))**2)
