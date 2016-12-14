@@ -97,12 +97,12 @@ def handleData(data):
         
         # calculate inverse kinematic solution
         trans = kin.Transformation()
-        trans.translate((float(values[0]), float(values[1]), float(values[2])))
         trans.rotate_x(np.deg2rad(float(values[3])))
         trans.rotate_y(np.deg2rad(float(values[4])))
         trans.rotate_z(np.deg2rad(float(values[5])))
-        
-        print(trans.getIKSolutions())        
+        trans.translate((float(values[0]), float(values[1]), float(values[2])))
+        print(str(trans))
+        print([str(a)for a in trans.getIKSolutions()])        
         
         # send the (multiple) solutions to the GUI
         # prefix for parsing
