@@ -135,6 +135,7 @@ def getDistanceL(vec):
 def getPosFromDistL(start, delta_s, diff):
     return np.multiply(diff, delta_s) + start
 
+#get inverse kinematics
 def getJointSets(traj_cart):
     traj_joints = []
     for i in xrange(100):
@@ -142,10 +143,10 @@ def getJointSets(traj_cart):
         j_set = []
         # calculate inverse kinematic solution
         trans = kin.Transformation()
-        trans.translate((float(c_set[0]), float(c_set[1]), float(c_set[2])))
-        trans.rotate_x(float(c_set[3]))
-        trans.rotate_y(float(c_set[4]))
         trans.rotate_z(float(c_set[5]))
+        trans.rotate_y(float(c_set[4]))
+        trans.rotate_x(float(c_set[3]))
+        trans.translate((float(c_set[0]), float(c_set[1]), float(c_set[2])))
         for x in trans.getIKSolutions():
             j_set.append(list(x.angles))
         traj_joints.append(j_set)   
@@ -329,3 +330,4 @@ def Move(robot, trajectory):
     for i in range(trajectory.shape[0]):
         robot.SetDOFValues(trajectory[i])
         time.sleep(deltaT)
+
