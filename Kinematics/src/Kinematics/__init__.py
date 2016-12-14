@@ -50,7 +50,7 @@ def assembleValueString():
     # get Axis values
     axis_arr = robot.GetDOFValues()
     # convert to string
-    axis_values = str(axis_arr[0])+";"+str(axis_arr[1])+";"+str(axis_arr[2])+";"+str(axis_arr[3])+";"+str(axis_arr[4])+";"+str(axis_arr[5])+'#'
+    axis_values = ";".join(["%.2f"%a for a in axis_arr])
     # adding dummy values for orientation and position (you need to compute the values)
     jsv = kin.JointSpaceVector(axis_arr)
     tcp = jsv.baseToTCP()
