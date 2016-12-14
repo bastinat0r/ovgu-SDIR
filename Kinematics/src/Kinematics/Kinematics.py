@@ -214,9 +214,9 @@ def getPhy1(x,y):
 def getPhy2(x, y, z):
     xy = getHypot(x,y)
     d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
-    dFront = getDFront(xy,z)
-    dRear = getDRear(xy,z)
-    gamma = math.atan((z - DH_PARAM_D[0]) / (xy - DH_PARAM_A[0]))
+    dFront = getDFront(xy,abs(z))
+    dRear = getDRear(xy,abs(z))
+    gamma = math.atan((abs(z) - abs(DH_PARAM_D[0])) / (xy - DH_PARAM_A[0]))
     betaFront = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dFront**2)) / (2 * DH_PARAM_A[1] * dFront))
     betaRear = math.acos((-(d34)**2 + (DH_PARAM_A[1]**2) + (dRear**2)) / (2 * DH_PARAM_A[1] * dRear))
                      
@@ -229,9 +229,9 @@ def getPhy2(x, y, z):
 def getPhy3(x, y, z):
     xy = getHypot(x,y)
     d34 = getHypot(DH_PARAM_A[2],DH_PARAM_D[3])
-    dFront = getDFront(xy,z)
-    dRear = getDRear(xy,z)
-    delta = math.atan(DH_PARAM_D[3] / DH_PARAM_A[2])
+    dFront = getDFront(xy,abs(z))
+    dRear = getDRear(xy,abs(z))
+    delta = math.atan(abs(DH_PARAM_D[3]) / DH_PARAM_A[2])
     epsilonFront = math.acos((-(dFront)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
     epsilonRear = math.acos((-(dRear)**2 + (d34**2) + (DH_PARAM_A[1]**2)) / (2 * d34 * DH_PARAM_A[1]))
     
@@ -242,11 +242,11 @@ def getPhy3(x, y, z):
     return [phy3_sol1, phy3_sol2, phy3_sol3, phy3_sol4]
 
 def getDFront(xy, z):
-    d = math.sqrt((xy - DH_PARAM_A[0])**2 + (z - DH_PARAM_D[0])**2)
+    d = math.sqrt((xy - DH_PARAM_A[0])**2 + (abs(z) - abs(DH_PARAM_D[0]))**2)
     return d
 
 def getDRear(xy, z):
-    d = math.sqrt((xy + DH_PARAM_A[0])**2 + (z - DH_PARAM_D[0])**2)
+    d = math.sqrt((xy + DH_PARAM_A[0])**2 + (abs(z) - abs(DH_PARAM_D[0]))**2)
     return d
 
 def getHypot(a, b):
