@@ -79,7 +79,7 @@ def handleData(data):
         
         # get trajectory
         if motion_type == 'L':
-            True #placeholder
+            trajectory = mf.LINtoConfiguration(robot.GetDOFValues(), target)
         else:
             trajectory = mf.PTPtoConfiguration(robot.GetDOFValues(), target, motion_type)
         # move robot
