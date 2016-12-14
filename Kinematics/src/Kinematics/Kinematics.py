@@ -55,7 +55,7 @@ class JointSpaceVector(object):
         return self.tWRIST4() * self.t45() * self.t56()
     
     def __str__(self):
-        return "(" + ", ".join(["%.2f" % a for a in self.angles]) + ")"
+        return "(" + ", ".join(["%.2f" % np.rad2deg(a) for a in self.angles]) + ")"
 
     def checkAngleValues(self):
         """check if the robot constraints are met by the given angles"""
