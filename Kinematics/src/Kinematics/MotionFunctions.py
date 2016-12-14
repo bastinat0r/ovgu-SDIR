@@ -87,15 +87,15 @@ def LINtoConfiguration(start_cfg, target_cfg):
         elif tTmp > 0 and tTmp <= tAcc:
             sTmp = getDistFromConstAcc(tTmp, aMax)
             delta_s = sTmp / dist
-            trajectory_cart[i] = getPosFromDist(start_cfg_cart, delta_s, diff)
+            trajectory_cart[i] = getPosFromDistL(start_cfg_cart, delta_s, diff)
         elif tTmp > tAcc and tTmp <= tAcc + tFlat:
             sTmp = getDistFromConstAcc(tAcc, aMax) + getDistFromConstVel(tTmp - tAcc, vMax)
             delta_s = sTmp / dist
-            trajectory_cart[i] = getPosFromDist(start_cfg_cart, delta_s, diff)
+            trajectory_cart[i] = getPosFromDistL(start_cfg_cart, delta_s, diff)
         elif tTmp > tAcc + tFlat and tTmp < tAll:
             sTmp = getDistFromConstAcc(tAcc, aMax) + getDistFromConstVel(tFlat, vMax) + (getDistFromConstVel(tTmp-(tFlat+tAcc), vMax) - getDistFromConstAcc(tTmp-(tFlat+tAcc), vMax))
             delta_s = sTmp / dist
-            trajectory_cart[i] = getPosFromDist(start_cfg_cart, delta_s, diff)
+            trajectory_cart[i] = getPosFromDistL(start_cfg_cart, delta_s, diff)
         else:
             trajectory_cart[i] = target_cfg_cart
                    
@@ -133,7 +133,7 @@ def getDistanceL(vec):
 
 #calculate cartesian position between points
 def getPosFromDistL(start, delta_s, diff):
-    return (diff / abs(diff)) * np.multiply(diff, delta_s) + start
+    return np.multiply(diff, delta_s) + start
 
 def getJointSets(traj_cart):
     traj_joints = []
@@ -160,7 +160,8 @@ def getConfiguration(start_cfg, target_cfg, trajectory_joints):
         if i > 98:
             trajectory[99] = target_cfg
         else:
-            lastConf = trajectory_joints[i][getClosestNextConf(lastConf,trajectory_joints[i])]
+            if np.shape(trajectory_joints[i])[0] > 0:
+                lastConf = trajectory_joints[i][getClosestNextConf(lastConf,trajectory_joints[i])]
             trajectory[i] = lastConf
     return trajectory
 
