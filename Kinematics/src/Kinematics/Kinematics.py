@@ -198,7 +198,7 @@ class Transformation(object):
             wristJoints = wristTransformation.getWristJoints()
             ret = ret + [JointSpaceVector(angles=p+wristJoints[0])]
             ret = ret + [JointSpaceVector(angles=p+wristJoints[1])]
-        return ret
+        return [conf for conf in ret if conf.checkAngleValues()]
 
     def getIKSolutions(self):
         return self.getJointVectors()
