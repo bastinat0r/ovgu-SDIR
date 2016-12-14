@@ -57,6 +57,25 @@ class JointSpaceVector(object):
     def __str__(self):
         return "(" + ", ".join(["%.2f" % a for a in self.angles]) + ")"
 
+    def checkAngleValues(self):
+        """check if the robot constraints are met by the given angles"""
+        if(abs(self.angles[0]) > np.deg2rad(185)):
+            return False
+        if(self.angles[1] > np.deg2rad(35)):
+            return False
+        if(self.angles[1] < np.deg2rad(-135)):
+            return False
+        if(self.angles[2] > np.deg2rad(158)):
+            return False
+        if(self.angles[2] < np.deg2rad(-120)):
+            return False
+        if(abs(self.angles[3]) > np.deg2rad(350)):
+            return False
+        if(abs(self.angles[4]) > np.deg2rad(130)):
+            return False
+        if(abs(self.angles[3]) > np.deg2rad(350)):
+            return False
+        return True
 
 
 class Transformation(object):
