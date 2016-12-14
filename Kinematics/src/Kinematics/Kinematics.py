@@ -145,7 +145,7 @@ class Transformation(object):
 
     def position(self):
         """ return the positional part of the transformation as a vector """
-        beta = math.atan2(self.matrix[2][0], math.sqrt(self.matrix[0][0]**2 + self.matrix[1,0]**2))
+        beta = math.atan2(-1 * self.matrix[2][0], math.sqrt(self.matrix[0][0]**2 + self.matrix[1][0]**2))
         cbeta = math.cos(beta)
         alpha = math.atan2(self.matrix[1][0] / cbeta, self.matrix[0][0] / cbeta)
         gamma = math.atan2(self.matrix[2][1] / cbeta, self.matrix[2][2] / cbeta)
@@ -169,7 +169,7 @@ class Transformation(object):
         return Transformation(matrix=inverse)
 
     def getWristJoints(self):
-        theta5 = -1 * np.arccos(self.matrix[2][2])
+        theta5 = np.arccos(self.matrix[2][2])
 # handle wrist singularity
 # just rotate the point a tiny little bit away, to get out of the singularity
 # the error we introduce is somewhere close to 1e-5 deg
@@ -178,7 +178,7 @@ class Transformation(object):
             self.rotate_y(0.0000001)
             self.rotate_z(0.0000001)
 
-        theta5 = -1 * np.arccos(self.matrix[2][2])
+        theta5 = np.arccos(self.matrix[2][2])
         theta4 = np.arctan2(self.matrix[1][2], self.matrix[0][2])
         theta6 = np.arctan2(self.matrix[2][1], -1 * self.matrix[2][0])
         solution1 = (theta4, theta5, theta6)
@@ -230,8 +230,8 @@ def calcAngles(arr):
     try:
         a2 = getPhy2Rear(arr[0],arr[1],arr[2])
         a3 = getPhy3Rear(arr[0],arr[1],arr[2])
-        s1 = (a1[0], a2[0], a3[0])
-        s2 = (a1[0], a2[1], a3[1])
+        s1 = (a1[1], a2[0], a3[0])
+        s2 = (a1[1], a2[1], a3[1])
         solutions.append(s1)
         solutions.append(s2)
     except ValueError:
