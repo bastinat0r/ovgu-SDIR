@@ -77,6 +77,10 @@ class JointSpaceVector(object):
             return False
         return True
 
+    def checkCollision(self, thing):
+        """check if this configuration collides with thing"""
+        return False
+
 
 class Transformation(object):
     """A simple class wrapping a standart robot transformation"""
