@@ -77,8 +77,16 @@ class JointSpaceVector(object):
             return False
         return True
 
-    def checkCollision(self, thing):
+    def isColliding(self, thing):
         """check if this configuration collides with thing"""
+        
+#todo improve collision check -> this is just a mockup
+#if any of the joint-points is within the bounding box -> return True
+        joints = [t01().position(), (t01()* t12()).position(), baseToWrist().position(), baseToTCP().position()]
+        for j in joints:
+            for i in xrange(0, 3):
+                if(thing.p1[i] <= joint[i] <= thing.p2[i]):
+                    return True
         return False
 
 
@@ -243,6 +251,13 @@ def calcAngles(arr):
     
 
     return solutions
+
+class Obstacle(object):
+    """Representation of an object (collision free planning)"""
+    def __init__(self, p1, p2):
+        """construct the thing from two points p1 and p2"""
+        self.p1 = p1
+        self.p2 = p
 
 DH_PARAM_D = JointSpaceVector().DH_PARAM_D
 DH_PARAM_A = JointSpaceVector().DH_PARAM_A
