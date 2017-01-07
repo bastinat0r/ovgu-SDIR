@@ -52,7 +52,10 @@ def assembleValueString():
     axis_arr = robot.GetDOFValues()
     # convert to string
     axis_values = ";".join(["%.2f"%np.rad2deg(a) for a in axis_arr]) + "#"
-    tcp = rc.GetTCPTransformation()
+    # adding dummy values for orientation and position (you need to compute the values)
+    jsv = kin.JointSpaceVector(axis_arr)
+    tcp = jsv.baseToTCP()
+    print(tcp)
     cart_values = tcp.cart_values()
     return prefix+axis_values+cart_values
     
@@ -118,4 +121,3 @@ if __name__ == "__main__":
     robot = env.GetRobots()[0] # get the first robot
     rc = RobotControl(robot)
     mf.setLimits(robot)
-    dataTransfer()
