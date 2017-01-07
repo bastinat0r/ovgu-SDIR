@@ -14,9 +14,15 @@ class RobotControl:
     def Move(self, jsv):
         self.manip.MoveActiveJoints(jsv.angles)
 
-    def GetTrajectory(self, jsv):
-        return self.manip.MoveActiveJoints(jsv.angles, outputtrajobj=True, execute=False)
+    def GetTrajectory(self, jsv, ignoreCollisions=False):
+        cc = self.robot.GetEnv().GetCollisionChecker()
+        if ignoreCollisions:
+            cc = self.robot.GetEnv().SetCollisionChecker(None)
+        rval self.manip.MoveActiveJoints(jsv.angles, outputtrajobj=True, execute=False)
+        cc = self.robot.GetEnv().SetCollisionChecker(cc)
+        return rval
 
+        rval
     def GetJointValuesFromTrajectory(self, trajectory, time):
         spec = trajectory.GetConfigurationSpecification()
         return spec.ExtractJointValues(trajectory.Sample(time),self.robot,range(self.robot.GetDOF()))
