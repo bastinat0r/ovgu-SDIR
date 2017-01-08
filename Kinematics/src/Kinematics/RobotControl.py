@@ -18,7 +18,7 @@ class RobotControl:
         cc = self.robot.GetEnv().GetCollisionChecker()
         if ignoreCollisions:
             cc = self.robot.GetEnv().SetCollisionChecker(None)
-        rval self.manip.MoveActiveJoints(jsv.angles, outputtrajobj=True, execute=False)
+        rval = self.manip.MoveActiveJoints(jsv.angles, outputtrajobj=True, execute=False)
         cc = self.robot.GetEnv().SetCollisionChecker(cc)
         return rval
 
