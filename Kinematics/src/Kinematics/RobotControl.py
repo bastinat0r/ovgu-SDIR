@@ -7,9 +7,14 @@ class RobotControl:
     def __init__(self, robot):
         self.robot = robot
         self.manip = interfaces.BaseManipulation(robot)
+        with robot.GetEnv():
+            self.ikmodel = databases.inversekinematics.InverseKinematicsModel(robot,iktype=IkParameterization.Type.Transform6D)
+            if not self.ikmodel.load():
+                self.ikmodel.autogenerate()
+
     
     def GetTCPTransformation(self):
-        return kin.Transformation(matrix=self.robot.GetActiveManipulator().GetLocalToolTransform()) 
+        return kin.Transformation(matrix=self.robot.GetActiveManipulator().GetTransform()) 
 
     def Move(self, jsv):
         self.manip.MoveActiveJoints(jsv.angles)
@@ -22,7 +27,6 @@ class RobotControl:
         cc = self.robot.GetEnv().SetCollisionChecker(cc)
         return rval
 
-        rval
     def GetJointValuesFromTrajectory(self, trajectory, time):
         spec = trajectory.GetConfigurationSpecification()
         return spec.ExtractJointValues(trajectory.Sample(time),self.robot,range(self.robot.GetDOF()))
@@ -52,4 +56,17 @@ class RobotControl:
         self.robot.SetVisible(True)
         return rval
 
-
+    def GetIKSolutions(self, T, IkFilter=IkFilterOptions.CheckEnvCollisions):
+        """
+        return IK solutions for point with transformation T
+        """
+        m = kin.Transformation(matrix=T)
+        l = self.ikmodel.manip.FindIKSolutions(T, IkFilter)
+        if(len(l) > 0):
+            return l
+        m.rotate_x(0.0001)
+        m.rotate_y(0.0001)
+        m.rotate_z(0.0001)
+        m.translate([0.0001, 0.0001,0.0001])
+        l2 = self.ikmodel.manip.FindIKSolutions(m.matrix, IkFilter)
+        return l2
