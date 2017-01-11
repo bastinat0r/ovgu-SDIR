@@ -76,18 +76,9 @@ class JointSpaceVector(object):
         if(abs(self.angles[3]) > np.deg2rad(350)):
             return False
         return True
+    def add_angles(self, angles):
+        self.angles = [x + y for x, y in zip(angles, self.angles)]
 
-    def isColliding(self, thing):
-        """check if this configuration collides with thing"""
-        
-#todo improve collision check -> this is just a mockup
-#if any of the joint-points is within the bounding box -> return True
-        joints = [t01().position(), (t01()* t12()).position(), baseToWrist().position(), baseToTCP().position()]
-        for j in joints:
-            for i in xrange(0, 3):
-                if(thing.p1[i] <= joint[i] <= thing.p2[i]):
-                    return True
-        return False
 
 
 class Transformation(object):
