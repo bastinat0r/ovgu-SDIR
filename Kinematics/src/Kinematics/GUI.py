@@ -1,5 +1,6 @@
 import sys
 import socket
+import GUI_Coll as gc
 from PyQt4 import QtGui, QtCore
 
 class GUI(QtGui.QWidget):
@@ -7,11 +8,7 @@ class GUI(QtGui.QWidget):
         super(GUI, self).__init__()
         
         # initialize GUI
-        self.initUI()
-        
-        # get the initial axis values as well as the initial position and orientation of the robot
-        self.dataTransfer('GET') # using the prefix get for server-sided parsing
-                  
+        self.initUI()                  
     
     def initUI(self):         
         grid = QtGui.QGridLayout()
@@ -30,6 +27,9 @@ class GUI(QtGui.QWidget):
         self.center()
         self.setWindowTitle('Simulation')
         self.show()
+        
+        # get the initial axis values as well as the initial position and orientation of the robot
+        self.dataTransfer('GET') # using the prefix get for server-sided parsing
         
         
     # create the group of widgets at the top left position
@@ -335,6 +335,7 @@ def main():
     app = QtGui.QApplication(sys.argv)
     
     gui = GUI()
+    gui2 = gc.CollGUI()
     
     sys.exit(app.exec_())
     
