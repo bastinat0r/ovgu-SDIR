@@ -6,6 +6,7 @@ import math
 import sys
 import socket
 from RobotControl import *
+import CollObjects as co
 
 
 # handles the data transfer between openrave (server) and the GUI (client)
@@ -108,6 +109,27 @@ def handleData(data):
         # adding dummy values (you need to replace them with the solutions)
         ik_values = [str(iks) for iks in trans.getIKSolutions()]
         return prefix+"\n".join(ik_values)
+
+    #check if line should be drawed
+    if data_arr[0] == "DRA":
+        # get values
+        values = data_arr[1].split(';')
+         
+        co.drawExample(env, values)
+        return data_arr[0]
+
+    #check if objects should be created
+    if data_arr[0] == "OBJ":
+        values = None
+        # get values
+        if data_arr[-1] != "R":
+            values = data_arr[1].split(';')
+            values = np.array([values])
+            values = values.astype(np.float)
+            values = np.divide(values, 1000.0)
+        
+        co.CreateObject(env, values)
+        return data_arr[0]
     
     
 if __name__ == "__main__":
