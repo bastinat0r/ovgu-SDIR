@@ -248,7 +248,7 @@ class Obstacle(object):
     def __init__(self, p1, p2):
         """construct the thing from two points p1 and p2"""
         self.p1 = p1
-        self.p2 = p
+        self.p2 = p2
 
 DH_PARAM_D = JointSpaceVector().DH_PARAM_D
 DH_PARAM_A = JointSpaceVector().DH_PARAM_A
