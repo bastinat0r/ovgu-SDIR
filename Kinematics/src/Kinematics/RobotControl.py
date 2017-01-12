@@ -2,6 +2,7 @@ import numpy as np
 import math
 import Kinematics as kin
 import random
+import time
 from openravepy import *
 
 class RobotControl:
@@ -19,13 +20,13 @@ class RobotControl:
 
     def Move(self, jsv):
         with self.robot.GetEnv():
-            self.manip.MoveActiveJoints(jsv.angles)
+            self.manip.MoveActiveJoints(jsv.angles, maxiter=10, maxtries=1, jitter=0)
 
     def GetTrajectory(self, jsv, ignoreCollisions=False):
         cc = self.robot.GetEnv().GetCollisionChecker()
         if ignoreCollisions:
             cc = self.robot.GetEnv().SetCollisionChecker(None)
-        rval = self.manip.MoveActiveJoints(jsv.angles, outputtrajobj=True, execute=False, maxiter=10, maxtries=1)
+        rval = self.manip.MoveActiveJoints(jsv.angles, outputtrajobj=True, execute=False, maxiter=10, maxtries=1, jitter=0)
         cc = self.robot.GetEnv().SetCollisionChecker(cc)
         return rval
 
@@ -99,7 +100,7 @@ class RobotControl:
         l2 = self.ikmodel.manip.FindIKSolutions(m.matrix, IkFilter)
         return l2
 
-    def GetRandomConfiguration(self, startConfiguration=None, lastConfiguration=None, num_points=5, length=1):
+    def GetRandomConfiguration(self, startConfiguration=None, lastConfiguration=None, num_points=5, length=1, inertia=0):
         """
         return a list of jointConfigurations the robot can move to
         if a startConfiguration is given, the collision-free movement 
@@ -107,10 +108,14 @@ class RobotControl:
         """
         if startConfiguration == None:
             startConfiguration = kin.JointSpaceVector( self.robot.GetDOFValues() )
+
+        if lastConfiguration != None:
+            startConfiguration.angles = [x + (x - y) * inertia for x, y in zip(startConfiguration.angles, lastConfiguration.angles)]
         configurations = []
         while len(configurations) < num_points:
             random_offset = [random.uniform(-1, 1) for a in xrange(6)]
-            random_offset = [length * x / sum(random_offset) for x in random_offset]
+            max_v = max([abs(x) for x in random_offset])
+            random_offset = [length * x / max_v for x in random_offset]
             x = kin.JointSpaceVector(angles = random_offset)
             x.add_angles(startConfiguration.angles)
             #check config
@@ -128,3 +133,21 @@ class RobotControl:
     def CheckLimits(self, jsv):
         values = [ max > v > min for min, v, max in zip(self.robot.GetDOFLimits()[0], jsv.angles, self.robot.GetDOFLimits()[1])]
         return all(values)
+
+    def RandomWalk(self, steps, sleeptime=1, length=1, inertia=1):
+        lastConfiguration = None
+        currentConfiguration = None
+        for i in xrange(steps):
+            newConfiguration = self.GetRandomConfiguration(lastConfiguration=lastConfiguration, num_points=1, length=length, inertia=inertia)[0]
+            self.Move(newConfiguration)
+            lastConfiguration=currentConfiguration
+            currentConfiguration=newConfiguration
+            time.sleep(sleeptime)
+
+    def reset(self):
+        """
+        currently not working :(
+        """
+        self.robot.SetVisible(False)
+        self.robot.SetDOFValues([0,0,0,0,0,0])
+        self.robot.SetVisible(True)
