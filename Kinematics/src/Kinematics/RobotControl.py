@@ -181,28 +181,34 @@ class RobotControl:
             random_point = kin.JointSpaceVector(angles=random.choice(self.rrt.nodes).values)
             point = self.GetRandomConfiguration(startConfiguration=random_point,num_points=1, length=0.5, inertia=0)[0].angles
         else:
-            point = [random.uniform(x, y) for x, y in zip(bounds[0], bounds[1])]
+            point = None
+            while point == None:
+                point = [random.uniform(x, y) for x, y in zip(bounds[0], bounds[1])]
+                if self.checkRobotCollision(kin.JointSpaceVector(point)):
+                    point = None
         p = None
         while p == None:
             p = self.rrt.addPoint(point)
         return p
 
-    def ShowTree(self):
+    def ShowTree(self, startnode=None):
         """
         should show the current rrt tree
         """
+        if startnode == None:
+            startnode=self.rrt.root
         self.handles = []
-        self.ShowNode(self.rrt.root)
-        time.sleep(5)
+        self.ShowNode(startnode)
 
     def ShowNode(self, node, depth=0):
+        d = depth + 1
         node_pos = self.GetTCPTransformation(configuration=kin.JointSpaceVector(node.values)).position()
         node_pos = list(node_pos[0:3])
         for child in node.children:
             child_pos = self.GetTCPTransformation(configuration=kin.JointSpaceVector(child.values)).position()
             child_pos = list(child_pos[0:3])
-            self.handles.append(drawExample(self.robot.GetEnv(), node_pos + child_pos, presskey=False, depth=depth))
-            self.ShowNode(child, depth=depth+10)
+            self.handles.append(drawExample(self.robot.GetEnv(), node_pos + child_pos, presskey=False, depth=d))
+            self.ShowNode(child, depth=d)
         
 
 

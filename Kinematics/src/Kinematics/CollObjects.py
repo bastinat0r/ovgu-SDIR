@@ -11,7 +11,10 @@ def drawExample(env, values, presskey=True, depth=0):
     y2 = float(values[4])
     z2 = float(values[5])
     handles = []
-    handles.append(env.drawlinestrip(points=np.array(((x1, y1, z1),(x2, y2, z2))), linewidth=0.01, colors=np.array(((255-depth)%255, (depth+128)%255, (255-depth) % 255))))
+    r = ((depth * 13) % 127) / 127.0
+    g = 1.0 / (depth + 0.001)
+    b = ((depth * 3) % 127) / 127.0
+    handles.append(env.drawlinestrip(points=np.array(((x1, y1, z1),(x2, y2, z2))), linewidth=2, colors=np.array(((r,g,b)))))
     if(presskey):
         raw_input('Enter any key to quit. ')
     return handles[0]
