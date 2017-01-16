@@ -1,7 +1,9 @@
 from openravepy import *
 import random
+import numpy as np
 
-def drawExample(env, values):
+def drawExample(env, values, presskey=True, depth=0):
+    values = [float(x) for x in values]
     x1 = float(values[0])
     y1 = float(values[1])
     z1 = float(values[2])
@@ -9,8 +11,10 @@ def drawExample(env, values):
     y2 = float(values[4])
     z2 = float(values[5])
     handles = []
-    handles.append(env.drawarrow(p1=[x1,y1,z1],p2=[x2,y2,z2],linewidth=0.01,color=[200.0,30.0,30.0]))
-    raw_input('Enter any key to quit. ')
+    handles.append(env.drawlinestrip(points=np.array(((x1, y1, z1),(x2, y2, z2))), linewidth=0.01, colors=np.array(((255-depth)%255, (depth+128)%255, (255-depth) % 255))))
+    if(presskey):
+        raw_input('Enter any key to quit. ')
+    return handles[0]
     
     
 class CreateObject():

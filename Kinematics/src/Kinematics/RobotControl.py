@@ -4,6 +4,8 @@ import Kinematics as kin
 import random
 import time
 from openravepy import *
+from RRT import *
+from CollObjects import *
 
 class RobotControl:
     def __init__(self, robot):
@@ -15,8 +17,18 @@ class RobotControl:
                 self.ikmodel.autogenerate()
 
     
-    def GetTCPTransformation(self):
-        return kin.Transformation(matrix=self.robot.GetActiveManipulator().GetTransform()) 
+    def GetTCPTransformation(self, configuration=None):
+        if configuration == None:
+            return kin.Transformation(matrix=self.robot.GetActiveManipulator().GetTransform()) 
+
+        with self.robot.GetEnv():
+            dof = self.robot.GetDOFValues()
+            self.robot.SetVisible(False)
+            self.robot.SetDOFValues(configuration.angles, xrange(6), checklimits=False)
+            rval = kin.Transformation(matrix=self.robot.GetActiveManipulator().GetTransform())
+            self.robot.SetDOFValues(dof, xrange(6), checklimits=False)
+            self.robot.SetVisible(True)
+        return rval
 
     def Move(self, jsv):
         with self.robot.GetEnv():
@@ -40,7 +52,7 @@ class RobotControl:
         you shoud hide the robot during the process and safe/restore the robot configuration
         """
         # todo check limits
-        self.robot.SetDOFValues(jsv.angles)
+        self.robot.SetDOFValues(jsv.angles, xrange(6), checklimits=False)
         return self.robot.GetEnv().CheckCollision(self.robot)
 
 
@@ -52,12 +64,13 @@ class RobotControl:
         * show the robot
         * return False if no collision occurs
         """
-        dof = self.robot.GetDOFValues()
         # collision configuration for testing: kin.JointSpaceVector[0, -.5, -.5, 0,0,0]
-        self.robot.SetVisible(False)
-        rval = self._checkCollision(jsv)
-        self.robot.SetDOFValues(dof)
-        self.robot.SetVisible(True)
+        with self.robot.GetEnv():
+            dof = self.robot.GetDOFValues()
+            self.robot.SetVisible(False)
+            rval = self._checkCollision(jsv)
+            self.robot.SetDOFValues(dof, xrange(6), checklimits=False)
+            self.robot.SetVisible(True)
         return rval
 
 
@@ -151,3 +164,45 @@ class RobotControl:
         self.robot.SetVisible(False)
         self.robot.SetDOFValues([0,0,0,0,0,0])
         self.robot.SetVisible(True)
+
+    def checkConnection(self, nodeA, nodeB):
+        return self.MoveIsCollisionFree(kin.JointSpaceVector(nodeA.values),
+                                        kin.JointSpaceVector(nodeB.values))
+
+    def InitRRT(self):
+        self.rrt = RRT(self.robot.GetDOFValues(), self.checkConnection)
+
+    def AddRRTPoint(self, values):
+        return self.rrt.addPoint(values)
+
+    def AddRandomRRTPoint(self, near_current=False):
+        bounds = self.robot.GetDOFLimits()
+        if(near_current):
+            random_point = kin.JointSpaceVector(angles=random.choice(self.rrt.nodes).values)
+            point = self.GetRandomConfiguration(startConfiguration=random_point,num_points=1, length=0.5, inertia=0)[0].angles
+        else:
+            point = [random.uniform(x, y) for x, y in zip(bounds[0], bounds[1])]
+        p = None
+        while p == None:
+            p = self.rrt.addPoint(point)
+        return p
+
+    def ShowTree(self):
+        """
+        should show the current rrt tree
+        """
+        self.handles = []
+        self.ShowNode(self.rrt.root)
+        time.sleep(5)
+
+    def ShowNode(self, node, depth=0):
+        node_pos = self.GetTCPTransformation(configuration=kin.JointSpaceVector(node.values)).position()
+        node_pos = list(node_pos[0:3])
+        for child in node.children:
+            child_pos = self.GetTCPTransformation(configuration=kin.JointSpaceVector(child.values)).position()
+            child_pos = list(child_pos[0:3])
+            self.handles.append(drawExample(self.robot.GetEnv(), node_pos + child_pos, presskey=False, depth=depth))
+            self.ShowNode(child, depth=depth+10)
+        
+
+
