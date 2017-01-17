@@ -1,6 +1,7 @@
 from openravepy import *
 import random
 import numpy as np
+import json
 
 def drawExample(env, values, presskey=True, depth=0):
     values = [float(x) for x in values]
@@ -18,33 +19,92 @@ def drawExample(env, values, presskey=True, depth=0):
     if(presskey):
         raw_input('Enter any key to quit. ')
     return handles[0]
+
+def saveConfig(env, slot):    
+    objects = Obstacles().getGeometrics()
+    try:
+        with open('testsamples.txt','r') as f:
+            strFile = json.load(f)
+        strFile[slot] = objects
+        
+        with open('testsamples.txt','w') as f:
+            json.dump(strFile, f)
+        
+    except:
+        createFile()
+        saveConfig(env,slot)
+            
+def loadConfig(env, slot):
+    try:
+        with open('testsamples.txt','r') as f:
+            strFile = json.load(f)
+            
+        config = strFile[slot]
+        obst = Obstacles()
+        obst.deleteAllObstacles(env)
+        for val in config:
+            obst.createObstacles(env, values = val)
+    except:
+        createFile()
+        loadConfig(env,slot)
+        
+def createFile():
+    f = open('testsamples.txt', 'w')
+    str_json = {
+                   0: [],
+                   1: [],
+                   2: [],
+                   3: [],
+                   4: []
+                }
+    json.dump(str_json, f)
+    f.close()
     
     
-class CreateObject():
+class Obstacles():
     objects = []
+    geometrics = []
     limits = {
-                'x': (-2, 2),
-                'y': (-2, 2),
-                'z': (0, 4),
-                'b_x': (0, 1),
-                'b_y': (0, 1),
-                'b_z': (0, 1)
+                'x': (-2000.0, 2000.0),
+                'y': (-2000.0, 2000.0),
+                'z': (0.0, 4000.0),
+                'b_x': (0.0, 1000.0),
+                'b_y': (0.0, 1000.0),
+                'b_z': (0.0, 1000.0)
              }
     
-    def __init__(self, env, values = None, name = None):    
+    def __init__(self): 
+        True
+    
+    def createObstacles(self, env, values = None, name = None):
         if name == None:
             name = 'obj' + str(len(self.objects)) 
         if values == None:
-            values = numpy.array([[random.uniform(self.limits['x'][0],self.limits['x'][1]), 
-                                   random.uniform(self.limits['y'][0],self.limits['y'][1]), 
-                                   random.uniform(self.limits['z'][0],self.limits['z'][1]), 
-                                   random.uniform(self.limits['b_x'][0],self.limits['b_x'][1]), 
-                                   random.uniform(self.limits['b_y'][0],self.limits['b_y'][1]), 
-                                   random.uniform(self.limits['b_z'][0],self.limits['b_z'][1])]])
+            values = [random.uniform(self.limits['x'][0],self.limits['x'][1]), 
+                      random.uniform(self.limits['y'][0],self.limits['y'][1]), 
+                      random.uniform(self.limits['z'][0],self.limits['z'][1]), 
+                      random.uniform(self.limits['b_x'][0],self.limits['b_x'][1]), 
+                      random.uniform(self.limits['b_y'][0],self.limits['b_y'][1]), 
+                      random.uniform(self.limits['b_z'][0],self.limits['b_z'][1])]
+        else:
+            values = [float(x) for x in values]
+        
+        self.geometrics.append(values)    
+        values = np.divide(values, 1000.0)
+        values_arr = numpy.array([values])
         
         self.body = RaveCreateKinBody(env,'')
         self.body.SetName(name)
-        self.body.InitFromBoxes(values,True)
+        self.body.InitFromBoxes(values_arr,True)
         
         self.objects.append(self.body)
         env.Add(self.objects[-1],True)
+        
+    def deleteAllObstacles(self, env):
+        obj = env.GetBodies()[3:]
+        for o in obj:
+            env.Remove(o)
+        self.geometrics = []
+        
+    def getGeometrics(self):
+        return self.geometrics
