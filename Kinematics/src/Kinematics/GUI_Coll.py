@@ -13,6 +13,8 @@ class CollGUI(GUI,QtGui.QWidget):
         grid.addWidget(self.createDrawGroup(), 0, 0)
         # create the group of widgets at the right position
         grid.addWidget(self.createObjGroup(), 0, 1)
+        # create the group of widgets at the bottom-left position
+        grid.addWidget(self.createFileGroup(), 1, 0)
         
         # set window properties
         self.setLayout(grid)
@@ -123,7 +125,44 @@ class CollGUI(GUI,QtGui.QWidget):
         
         return group_box
     
-    # function is called when the calculate IK button is clicked
+    # create the group of widgets at the bottom left position
+    def createFileGroup(self):
+        # initialize the group
+        group_box = QtGui.QGroupBox('Save / Load Configuration')
+        # use grid layout
+        grid_file = QtGui.QGridLayout()
+        
+        # set up radio buttons
+        self.radio_File_0 = QtGui.QRadioButton('Slot 1', self)
+        self.radio_File_0.setChecked(True)
+        self.radio_File_1 = QtGui.QRadioButton('Slot 2', self)
+        self.radio_File_2 = QtGui.QRadioButton('Slot 3', self)
+        self.radio_File_3 = QtGui.QRadioButton('Slot 4', self)
+        self.radio_File_4 = QtGui.QRadioButton('Slot 5', self)
+        
+        # set up buttons
+        self.button_load = QtGui.QPushButton('Load', self)
+        self.button_save = QtGui.QPushButton('Save', self)
+        # trigger function on clicked
+        QtCore.QObject.connect(self.button_load, QtCore.SIGNAL("clicked()"), self.buttonLoadClicked)
+        QtCore.QObject.connect(self.button_save, QtCore.SIGNAL("clicked()"), self.buttonSaveClicked)
+        
+        # add the widgets to the grid layout
+        grid_file.addWidget(self.radio_File_0, 0, 0)
+        grid_file.addWidget(self.radio_File_1, 0, 1)
+        grid_file.addWidget(self.radio_File_2, 0, 2)
+        grid_file.addWidget(self.radio_File_3, 0, 3)
+        grid_file.addWidget(self.radio_File_4, 0, 4)
+        grid_file.addWidget(self.button_load, 1, 0)
+        grid_file.addWidget(self.button_save, 1, 1)
+        
+        
+        # set the grid layout for the group
+        group_box.setLayout(grid_file)
+        
+        return group_box
+    
+    
     def buttonDrawClicked(self):
         # prefix for parsing
         prefix = "DRA#"   
@@ -132,7 +171,6 @@ class CollGUI(GUI,QtGui.QWidget):
         # send data
         self.dataTransfer(prefix+values)    
         
-    # function is called when the calculate IK button is clicked
     def buttonObjClicked(self):
         # prefix for parsing
         prefix = "OBJ#"   
@@ -142,4 +180,27 @@ class CollGUI(GUI,QtGui.QWidget):
         if self.checkbox_obj.isChecked():
             sufix = "#R"
         # send data
-        self.dataTransfer(prefix+values+sufix)      
+        self.dataTransfer(prefix+values+sufix)   
+        
+    def buttonSaveClicked(self):
+        prefix = "SAV"
+        suffix = self.getSlot()
+        self.dataTransfer(prefix + suffix)
+        
+    def buttonLoadClicked(self):    
+        prefix = "LOA"
+        suffix = self.getSlot()
+        self.dataTransfer(prefix + suffix)
+        
+    def getSlot(self):
+        if self.radio_File_1.isChecked():
+            slot = "#1"
+        elif self.radio_File_2.isChecked():
+            slot = "#2"
+        elif self.radio_File_3.isChecked():
+            slot = "#3"
+        elif self.radio_File_3.isChecked():
+            slot = "#4"
+        else:
+            slot = "#0"
+        return slot
