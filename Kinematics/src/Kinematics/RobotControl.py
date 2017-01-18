@@ -16,6 +16,7 @@ class RobotControl:
             if not self.ikmodel.load():
                 self.ikmodel.autogenerate()
         self.InitRRT()
+        self.current_node = self.rrt.root
 
     
     def GetTCPTransformation(self, configuration=None):
@@ -34,6 +35,7 @@ class RobotControl:
     def Move(self, jsv):
         with self.robot.GetEnv():
             self.manip.MoveActiveJoints(jsv.angles, maxiter=10, maxtries=1, jitter=0)
+        time.sleep(1)
 
     def GetTrajectory(self, jsv, ignoreCollisions=False):
         cc = self.robot.GetEnv().GetCollisionChecker()
@@ -168,7 +170,7 @@ class RobotControl:
         currently not working :(
         """
         self.robot.SetVisible(False)
-        self.robot.SetDOFValues([0,0,0,0,0,0])
+        self.robot.SetDOFValues([0,0,0,0,0,0], xrange(6), checklimits=False)
         self.robot.SetVisible(True)
 
     def checkConnection(self, nodeA, nodeB):
@@ -263,9 +265,11 @@ class RobotControl:
         return waypoints
 
     def CollisionFreeMove(self, goal):
+        self.MoveToRoot()
         waypoints = self.GetWaypoints(goal)
         for w in waypoints:
             self.Move(kin.JointSpaceVector(w.values))
+            self.current_node = w
             time.sleep(0.2)
 
     def GetRandomGoal(self):
@@ -279,3 +283,12 @@ class RobotControl:
 
     def ShowGoal(self):
         pass
+
+    def MoveToRoot(self):
+        while (self.current_node != self.rrt.root):
+            jsv = kin.JointSpaceVector(self.current_node.parents[0].values) 
+            self.Move(jsv)
+            self.current_node = self.current_node.parents[0]
+            print(len(self.current_node.parents))
+        jsv = kin.JointSpaceVector(self.current_node.values) 
+        self.Move(jsv)
