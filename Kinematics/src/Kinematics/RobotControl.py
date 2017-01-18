@@ -15,6 +15,7 @@ class RobotControl:
             self.ikmodel = databases.inversekinematics.InverseKinematicsModel(robot,iktype=IkParameterization.Type.Transform6D)
             if not self.ikmodel.load():
                 self.ikmodel.autogenerate()
+        self.InitRRT()
 
     
     def GetTCPTransformation(self, configuration=None):
@@ -53,8 +54,7 @@ class RobotControl:
         """
         # todo check limits
         self.robot.SetDOFValues(jsv.angles, xrange(6), checklimits=False)
-        return self.robot.GetEnv().CheckCollision(self.robot)
-
+        return self.robot.GetEnv().CheckCollision(self.robot) or self.robot.CheckSelfCollision()
 
     def checkRobotCollision(self, jsv):
         """ 
@@ -64,6 +64,9 @@ class RobotControl:
         * show the robot
         * return False if no collision occurs
         """
+        # if the limits are not kept we count it as colliding
+        if not self.CheckLimits(jsv):
+            return True
         # collision configuration for testing: kin.JointSpaceVector[0, -.5, -.5, 0,0,0]
         with self.robot.GetEnv():
             dof = self.robot.GetDOFValues()
@@ -144,6 +147,9 @@ class RobotControl:
         return [x for x in self.robot.GetEnv().GetBodies() if self.robot.GetEnv().CheckCollision(self.robot, x)]
 
     def CheckLimits(self, jsv):
+        """
+        return True if the given configuration is within the robot's limits
+        """
         values = [ max > v > min for min, v, max in zip(self.robot.GetDOFLimits()[0], jsv.angles, self.robot.GetDOFLimits()[1])]
         return all(values)
 
@@ -170,16 +176,30 @@ class RobotControl:
                                         kin.JointSpaceVector(nodeB.values))
 
     def InitRRT(self):
-        self.rrt = RRT(self.robot.GetDOFValues(), self.checkConnection)
+        self.rrt = RRT(self.robot.GetDOFValues(), self.checkConnection, rc=self)
 
     def AddRRTPoint(self, values):
         return self.rrt.addPoint(values)
 
-    def AddRandomRRTPoint(self, near_current=False):
+    def AddRandomRRTPoint(self, near_current=False, chooseBySumdist=False):
         bounds = self.robot.GetDOFLimits()
         if(near_current):
-            random_point = kin.JointSpaceVector(angles=random.choice(self.rrt.nodes).values)
-            point = self.GetRandomConfiguration(startConfiguration=random_point,num_points=1, length=0.5, inertia=0)[0].angles
+            if not chooseBySumdist:
+                node = random.choice(self.rrt.nodes)
+            else:
+                nodes = sorted(self.rrt.nodes, key=lambda x: self.rrt.sumDist(x))
+                node = random.choice(nodes[-25:])
+            random_point = kin.JointSpaceVector(angles=node.values)
+            if len(node.parents) > 0:
+                parent_point = kin.JointSpaceVector(angles=node.parents[0].values)
+            else:
+                parent_point = None
+            point = self.GetRandomConfiguration(
+                    startConfiguration=random_point, 
+                    lastConfiguration=parent_point,
+                    num_points=1, 
+                    length=0.5, 
+                    inertia=0)[0].angles
         else:
             point = None
             while point == None:
@@ -209,6 +229,53 @@ class RobotControl:
             child_pos = list(child_pos[0:3])
             self.handles.append(drawExample(self.robot.GetEnv(), node_pos + child_pos, presskey=False, depth=d))
             self.ShowNode(child, depth=d)
-        
+
+    def ConnectConfigurationToTree(self, goal, growth=10, maxiter=np.Inf):
+        goalNode = self.rrt.addPoint(goal.angles)
+        if goalNode != None:
+            return goalNode
+
+        i = 0
+        while True:
+            # check condition
+            if i > maxiter:
+                return False
+            self.ShowTree()
+            # generate 10 new points
+            for x in xrange(growth):
+                self.AddRandomRRTPoint(near_current=True, chooseBySumdist=True)
+            # try to add the goal-point
+            goalNode = self.rrt.addPoint(goal.angles)
+            if goalNode != None:
+                self.ShowTree()
+                return goalNode
+            i = i + 1
 
 
+    def GetWaypoints(self, goal):
+        goalNode = self.ConnectConfigurationToTree(goal)
+        currentNode = goalNode
+        waypoints = [currentNode]
+        while currentNode.parents != []:
+            currentNode = currentNode.parents[0]
+            waypoints.append(currentNode)
+        waypoints.reverse()
+        return waypoints
+
+    def CollisionFreeMove(self, goal):
+        waypoints = self.GetWaypoints(goal)
+        for w in waypoints:
+            self.Move(kin.JointSpaceVector(w.values))
+            time.sleep(0.2)
+
+    def GetRandomGoal(self):
+        bounds = self.robot.GetDOFLimits()
+        point = None
+        while point == None:
+            point = [random.uniform(x, y) for x, y in zip(bounds[0], bounds[1])]
+            if self.checkRobotCollision(kin.JointSpaceVector(point)):
+                point = None
+        return kin.JointSpaceVector(point)
+
+    def ShowGoal(self):
+        pass

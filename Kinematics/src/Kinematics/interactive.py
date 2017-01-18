@@ -1,14 +1,12 @@
 from openravepy import *
 import Kinematics as kin
 import MotionFunctions as mf
+import CollObjects as co
 import numpy as np
 import math
 import sys
 import socket
 from RobotControl import *
-import CollObjects as co
-import time
-
 
 # handles the data transfer between openrave (server) and the GUI (client)
 def dataTransfer():
@@ -53,8 +51,11 @@ def assembleValueString():
     # get Axis values
     axis_arr = robot.GetDOFValues()
     # convert to string
-    axis_values = ";".join(["%.2f"%np.rad2deg(a) for a in axis_arr]) + "#"
-    tcp = rc.GetTCPTransformation()
+    axis_values = str(axis_arr[0])+";"+str(axis_arr[1])+";"+str(axis_arr[2])+";"+str(axis_arr[3])+";"+str(axis_arr[4])+";"+str(axis_arr[5])+'#'
+    # adding dummy values for orientation and position (you need to compute the values)
+    jsv = kin.JointSpaceVector(axis_arr)
+    tcp = jsv.baseToTCP()
+    print(tcp)
     cart_values = tcp.cart_values()
     return prefix+axis_values+cart_values
     
@@ -97,12 +98,12 @@ def handleData(data):
         
         # calculate inverse kinematic solution
         trans = kin.Transformation()
+        trans.translate((float(values[0]), float(values[1]), float(values[2])))
         trans.rotate_x(np.deg2rad(float(values[3])))
         trans.rotate_y(np.deg2rad(float(values[4])))
         trans.rotate_z(np.deg2rad(float(values[5])))
-        trans.translate((float(values[0]), float(values[1]), float(values[2])))
-        print(str(trans))
-        print([str(a)for a in trans.getIKSolutions()])        
+        
+        print(trans.getIKSolutions())        
         
         # send the (multiple) solutions to the GUI
         # prefix for parsing
@@ -110,28 +111,41 @@ def handleData(data):
         # adding dummy values (you need to replace them with the solutions)
         ik_values = [str(iks) for iks in trans.getIKSolutions()]
         return prefix+"\n".join(ik_values)
-
-    #check if line should be drawed
+    
+    #check if lines should be drawn
     if data_arr[0] == "DRA":
         # get values
         values = data_arr[1].split(';')
          
         co.drawExample(env, values)
         return data_arr[0]
-
+    
     #check if objects should be created
     if data_arr[0] == "OBJ":
         values = None
         # get values
         if data_arr[-1] != "R":
             values = data_arr[1].split(';')
-            values = np.array([values])
-            values = values.astype(np.float)
-            values = np.divide(values, 1000.0)
         
-        co.CreateObject(env, values)
+        obst = co.Obstacles()
+        obst.createObstacles(env, values)
         return data_arr[0]
     
+    #check if config should be saved
+    if data_arr[0] == "SAV":
+        # get slot
+        slot = data_arr[1]
+         
+        co.saveConfig(env, slot)
+        return data_arr[0]
+    
+    #check if config should be loaded
+    if data_arr[0] == "LOA":
+        # get slot
+        slot = data_arr[1]
+         
+        co.loadConfig(env, slot)
+        return data_arr[0]
     
 if __name__ == "__main__":
     # setting up the operave environment
@@ -139,9 +153,17 @@ if __name__ == "__main__":
     env.SetViewer('qtcoin') # attach viewer (optional)
     env.Load('../../MyData/MyEnvironment/MyEnv.xml') # load a simple scene
     robot = env.GetRobots()[0] # get the first robot
-    rc = RobotControl(robot)
     mf.setLimits(robot)
-    for i in xrange(10):
-        co.CreateObject(env)
+    rc = RobotControl(robot)
+    o = co.Obstacles()
+    co.loadConfig(env, "foobar")
     for x in rc.GetCollidingObjects():
         env.RemoveKinBody(x)
+    foobar_goal = [1.6785423619679571,
+            -1.3389945431922989,
+            1.2769405351508896,
+            -5.1480498168162656,
+            1.0746364933441117,
+            -1.1012573561229333]
+
+
