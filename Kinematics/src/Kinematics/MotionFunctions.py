@@ -1,5 +1,5 @@
 from __future__ import division
-from math import sqrt
+from math import sqrt,ceil
 import numpy as np
 import time
 import Kinematics as kin
@@ -192,8 +192,8 @@ def PTPtoConfiguration(start_cfg, target_cfg, motiontype):
     :returns: Array containing the axis angles of the interpolated path
     :rtype: matrix of floats
     """
-    
-    trajectory = np.empty([100, 6])
+    eucl_dist = ceil(getEuclDistance(start_cfg, target_cfg))
+    trajectory = np.empty([int(eucl_dist), 6])
 
     target_cfg = getEndPoints(target_cfg)
 
@@ -210,11 +210,11 @@ def PTPtoConfiguration(start_cfg, target_cfg, motiontype):
         #get synchronous velocity profile
         velProf = getSynchVelProfile(dist,[j_tMax,tMax])
     
-    delta = tMax / 100.0
+    delta = tMax / eucl_dist
     setDelta(delta)
     
     #calculate trajectory
-    for i in xrange(100):
+    for i in xrange(int(eucl_dist)):
         tTmp = delta * i
         for j in xrange(6):
             tAcc = velProf[j][0]
@@ -325,9 +325,13 @@ def getVMaxFromTime(dist, index, tMax):
 def getPosFromDist(start, s, diff):
     return (diff / abs(diff)) * s + start
 
+def getEuclDistance(start, end):
+    s_config = kin.JointSpaceVector(angles=start).baseToTCP().position()[:3]
+    e_config = kin.JointSpaceVector(angles=end).baseToTCP().position()[:3]
+    return getDistanceL(np.subtract(e_config,s_config))
+
 #move robot
 def Move(robot, trajectory):
     for i in range(trajectory.shape[0]):
         robot.SetDOFValues(trajectory[i])
         time.sleep(deltaT)
-
