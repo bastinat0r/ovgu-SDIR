@@ -1,5 +1,5 @@
 from __future__ import division
-from math import sqrt
+from math import sqrt,ceil
 import numpy as np
 import time
 import Kinematics as kin
@@ -127,9 +127,9 @@ def getVelProfileL(dist, a, v):
         tAll = 0.0
     return [tAcc, tFlat, tAll]
 
-#calculate cartesian distance
+#calculate euclidian distance
 def getDistanceL(vec):
-    return sqrt(vec[0]**2 + vec[1]**2 + vec[2]**2)
+    return sqrt(sum([x**2 for x in vec]))
 
 #calculate cartesian position between points
 def getPosFromDistL(start, delta_s, diff):
@@ -192,8 +192,8 @@ def PTPtoConfiguration(start_cfg, target_cfg, motiontype):
     :returns: Array containing the axis angles of the interpolated path
     :rtype: matrix of floats
     """
-    
-    trajectory = np.empty([100, 6])
+    eucl_dist = ceil(getEuclDistance(np.rad2deg(start_cfg), np.rad2deg(target_cfg)))
+    trajectory = np.empty([int(eucl_dist), 6])
 
     target_cfg = getEndPoints(target_cfg)
 
@@ -210,11 +210,11 @@ def PTPtoConfiguration(start_cfg, target_cfg, motiontype):
         #get synchronous velocity profile
         velProf = getSynchVelProfile(dist,[j_tMax,tMax])
     
-    delta = tMax / 100.0
+    delta = tMax / eucl_dist
     setDelta(delta)
     
     #calculate trajectory
-    for i in xrange(100):
+    for i in xrange(int(eucl_dist)):
         tTmp = delta * i
         for j in xrange(6):
             tAcc = velProf[j][0]
@@ -325,11 +325,16 @@ def getVMaxFromTime(dist, index, tMax):
 def getPosFromDist(start, s, diff):
     return (diff / abs(diff)) * s + start
 
+def getEuclDistance(start, end):
+    #s_config = kin.JointSpaceVector(angles=start).baseToTCP().position()[:3]
+    #e_config = kin.JointSpaceVector(angles=end).baseToTCP().position()[:3]
+    return getDistanceL(np.subtract(start,end))
+
 #move robot
 def Move(robot, trajectory):
     #with robot.GetEnv():
-        for i in range(trajectory.shape[0]):
-            with robot.GetEnv():
-                robot.SetDOFValues(trajectory[i])
-            time.sleep(deltaT)
+    for i in range(trajectory.shape[0]):
+        with robot.GetEnv():
+            robot.SetDOFValues(trajectory[i])
+        time.sleep(deltaT)
 
