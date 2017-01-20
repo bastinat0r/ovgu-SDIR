@@ -327,7 +327,9 @@ def getPosFromDist(start, s, diff):
 
 #move robot
 def Move(robot, trajectory):
-    for i in range(trajectory.shape[0]):
-        robot.SetDOFValues(trajectory[i])
-        time.sleep(deltaT)
+    #with robot.GetEnv():
+        for i in range(trajectory.shape[0]):
+            with robot.GetEnv():
+                robot.SetDOFValues(trajectory[i])
+            time.sleep(deltaT)
 

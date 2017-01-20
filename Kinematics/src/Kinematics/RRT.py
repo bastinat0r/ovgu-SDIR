@@ -1,6 +1,7 @@
 import numpy as np
 import Kinematics as kin
 from RobotControl import *
+import math
 
 class RRT:
     def __init__(self, root_node, connects, rc=None):
@@ -30,13 +31,13 @@ class RRT:
         neighbour.children.append(node)
         node.parents.append(neighbour)
         self.nodes.append(node)
-        return neighbour
+        return node
 
     def sumDist(self, node):
-        return sum([node.distance(n) for n in self.nodes])
+        return sum([node.cart_distance(n) for n in self.nodes])
 
     def closeNodeCount(self, node, dist=1):
-        closeNodes = [n for n in self.nodes if node.distance(n) < dist]
+        closeNodes = [n for n in self.nodes if node.cart_distance(n) < dist]
         return len(closeNodes)
 
     
@@ -54,7 +55,13 @@ class RRTNode:
         """
         distance measure for the nodes in this rrt
         """
-        return sum([(x - y)**2 for x, y in zip(self.point, other.point)])
+        return math.sqrt(sum([(x - y)**2 for x, y in zip(self.values, other.values)]))
+
+    def cart_distance(self, other):
+        """
+        distance measure for the nodes in this rrt
+        """
+        return math.sqrt(sum([(x - y)**2 for x, y in zip(self.point, other.point)]))
     
     def __str__(self):
         return "%s" %str(self.values)

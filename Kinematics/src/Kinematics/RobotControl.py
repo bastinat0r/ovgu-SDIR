@@ -6,6 +6,7 @@ import time
 from openravepy import *
 from RRT import *
 from CollObjects import *
+import MotionFunctions
 
 class RobotControl:
     def __init__(self, robot):
@@ -33,22 +34,32 @@ class RobotControl:
         return rval
 
     def Move(self, jsv):
+        MotionFunctions.setDelta(1)
+        t = self.GetTrajectory(jsv)
+        MotionFunctions.Move(self.robot, t)        
+        time.sleep(0.5)
+
+    def GetTrajectory(self, goal, start=None):
+        if start == None:
+            start = kin.JointSpaceVector(self.robot.GetDOFValues())
+        return MotionFunctions.PTPtoConfiguration(start.angles, goal.angles, 1)
+
+    def CheckTrajectory(self, trajectory):
+        if not self.CheckLimits(kin.JointSpaceVector(trajectory[-1])):
+            return True
+        # collision configuration for testing: kin.JointSpaceVector[0, -.5, -.5, 0,0,0]
         with self.robot.GetEnv():
-            self.manip.MoveActiveJoints(jsv.angles, maxiter=10, maxtries=1, jitter=0)
-        time.sleep(1)
-
-    def GetTrajectory(self, jsv, ignoreCollisions=False):
-        cc = self.robot.GetEnv().GetCollisionChecker()
-        if ignoreCollisions:
-            cc = self.robot.GetEnv().SetCollisionChecker(None)
-        rval = self.manip.MoveActiveJoints(jsv.angles, outputtrajobj=True, execute=False, maxiter=10, maxtries=1, jitter=0)
-        cc = self.robot.GetEnv().SetCollisionChecker(cc)
+            dof = self.robot.GetDOFValues()
+            self.robot.SetVisible(False)
+            rval = False
+            for conf in trajectory:
+                if self._checkCollision(kin.JointSpaceVector(conf)):
+                    rval = True
+                    break
+            self.robot.SetDOFValues(dof, xrange(6), checklimits=False)
+            self.robot.SetVisible(True)
         return rval
-
-    def GetJointValuesFromTrajectory(self, trajectory, time):
-        spec = trajectory.GetConfigurationSpecification()
-        return spec.ExtractJointValues(trajectory.Sample(time),self.robot,range(self.robot.GetDOF()))
-
+        
     def _checkCollision(self, jsv):
         """
         inner function for checking robot collisions
@@ -78,30 +89,14 @@ class RobotControl:
             self.robot.SetVisible(True)
         return rval
 
-
-    def _MoveIsCollisionFree(self, startConfig, endConfig):
-        self.robot.SetDOFValues(startConfig.angles)
-        try:
-            self.GetTrajectory(endConfig)
-            return True
-        except planning_error:
-            return False
-        return True
-
     def MoveIsCollisionFree(self, startConfig, endConfig):
         """
         return True if it is possible to move from startConfig to endConfig without a collision
         """
-        # todo: check limits before more expensive computations
-        dof = self.robot.GetDOFValues()
-        self.robot.SetVisible(False)
-        if self._checkCollision(endConfig):
-            rval = False
-        else:
-            rval = self._MoveIsCollisionFree(startConfig, endConfig)
-        self.robot.SetDOFValues(dof)
-        self.robot.SetVisible(True)
-        return rval
+        if not self.CheckLimits(endConfig):
+            return False
+        t = self.GetTrajectory(endConfig, start=startConfig)
+        return not self.CheckTrajectory(t)
 
     def GetIKSolutions(self, T, IkFilter=IkFilterOptions.CheckEnvCollisions):
         """
@@ -183,14 +178,20 @@ class RobotControl:
     def AddRRTPoint(self, values):
         return self.rrt.addPoint(values)
 
-    def AddRandomRRTPoint(self, near_current=False, chooseBySumdist=False):
+    def AddRandomRRTPoint(self, near_current=False, chooseBySumDist=False, chooseByCloseNodeCount=False):
         bounds = self.robot.GetDOFLimits()
         if(near_current):
-            if not chooseBySumdist:
+            if not (chooseBySumDist or chooseByCloseNodeCount):
                 node = random.choice(self.rrt.nodes)
             else:
-                nodes = sorted(self.rrt.nodes, key=lambda x: self.rrt.sumDist(x))
-                node = random.choice(nodes[-25:])
+                choice = []
+                if chooseBySumDist:
+                    nodes = sorted(self.rrt.nodes, key=lambda x: self.rrt.sumDist(x))
+                    choice = choice + nodes[-5:]
+                if chooseByCloseNodeCount:
+                    nodes = sorted(self.rrt.nodes, key=lambda x: self.rrt.closeNodeCount(x, dist=0.3))
+                    choice = choice + nodes[-5:]
+                node = random.choice(choice)
             random_point = kin.JointSpaceVector(angles=node.values)
             if len(node.parents) > 0:
                 parent_point = kin.JointSpaceVector(angles=node.parents[0].values)
@@ -245,17 +246,17 @@ class RobotControl:
             self.ShowTree()
             # generate 10 new points
             for x in xrange(growth):
-                self.AddRandomRRTPoint(near_current=True, chooseBySumdist=True)
+                self.AddRandomRRTPoint(near_current=True, chooseBySumDist=True, chooseByCloseNodeCount=True)
             # try to add the goal-point
             goalNode = self.rrt.addPoint(goal.angles)
             if goalNode != None:
-                self.ShowTree()
                 return goalNode
             i = i + 1
 
 
     def GetWaypoints(self, goal):
         goalNode = self.ConnectConfigurationToTree(goal)
+        self.ShowTree()
         currentNode = goalNode
         waypoints = [currentNode]
         while currentNode.parents != []:
