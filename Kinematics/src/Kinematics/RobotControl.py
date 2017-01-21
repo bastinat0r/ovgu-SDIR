@@ -172,24 +172,33 @@ class RobotControl:
         return self.MoveIsCollisionFree(kin.JointSpaceVector(nodeA.values),
                                         kin.JointSpaceVector(nodeB.values))
 
-    def InitRRT(self):
-        self.rrt = RRT(self.robot.GetDOFValues(), self.checkConnection, rc=self)
+    def InitRRT(self, root=None):
+        if(root == None):
+            root = self.robot.GetDOFValues()
+        self.rrt = RRT(root, self.checkConnection, rc=self)
 
-    def AddRRTPoint(self, values):
-        return self.rrt.addPoint(values)
+    def InitGoalTree(self, goal):
+        self.goalRRT = RRT(goal.angles, self.checkConnection, rc=self)
 
-    def AddRandomRRTPoint(self, near_current=False, chooseBySumDist=False, chooseByCloseNodeCount=False):
+    def AddRRTPoint(self, values, rrt=None):
+        if rrt==None:
+            self.rrt = RRT(root, self.checkConnection, rc=self)
+        return rrt.addPoint(values)
+
+    def AddRandomRRTPoint(self, near_current=False, chooseBySumDist=False, chooseByCloseNodeCount=False, rrt=None):
+        if rrt == None:
+            rrt = self.rrt
         bounds = self.robot.GetDOFLimits()
         if(near_current):
             if not (chooseBySumDist or chooseByCloseNodeCount):
-                node = random.choice(self.rrt.nodes)
+                node = random.choice(rrt.nodes)
             else:
                 choice = []
                 if chooseBySumDist:
-                    nodes = sorted(self.rrt.nodes, key=lambda x: self.rrt.sumDist(x))
+                    nodes = sorted(rrt.nodes, key=lambda x: rrt.sumDist(x))
                     choice = choice + nodes[-5:]
                 if chooseByCloseNodeCount:
-                    nodes = sorted(self.rrt.nodes, key=lambda x: self.rrt.closeNodeCount(x, dist=0.3))
+                    nodes = sorted(rrt.nodes, key=lambda x: rrt.closeNodeCount(x, dist=0.3))
                     choice = choice + nodes[-5:]
                 node = random.choice(choice)
             random_point = kin.JointSpaceVector(angles=node.values)
@@ -211,15 +220,17 @@ class RobotControl:
                     point = None
         p = None
         while p == None:
-            p = self.rrt.addPoint(point)
+            p = rrt.addPoint(point)
         return p
 
-    def ShowTree(self, startnode=None):
+    def ShowTree(self, startnode=None, rrt=None):
         """
         should show the current rrt tree
         """
+        if rrt == None:
+            rrt = self.rrt
         if startnode == None:
-            startnode=self.rrt.root
+            startnode=rrt.root
         self.handles = []
         self.ShowNode(startnode)
 
@@ -293,3 +304,18 @@ class RobotControl:
             print(len(self.current_node.parents))
         jsv = kin.JointSpaceVector(self.current_node.values) 
         self.Move(jsv)
+
+
+    def GrowTree(self, steps=10, rrt=None):
+        if rrt == None:
+            rrt = self.rrt
+        for i in xrange(steps):
+            self.AddRandomRRTPoint(near_current=True, chooseBySumDist=True, chooseByCloseNodeCount=True, rrt=rrt)
+
+    def ConnectTrees(self):
+        #find good candidates for connecting the trees
+        # for now: brut-force connectivity
+        for n2 in self.goalRRT.nodes:
+            if self.rrt.addPoint(n2.values) != None:
+                print("yay")
+                return
