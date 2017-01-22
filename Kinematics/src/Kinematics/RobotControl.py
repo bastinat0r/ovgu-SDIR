@@ -42,7 +42,7 @@ class RobotControl:
     def GetTrajectory(self, goal, start=None):
         if start == None:
             start = kin.JointSpaceVector(self.robot.GetDOFValues())
-        return MotionFunctions.PTPtoConfiguration(start.angles, goal.angles, 1)
+        return MotionFunctions.PTPtoConfiguration(start.angles, goal.angles, 'S')
 
     def CheckTrajectory(self, trajectory):
         if not self.CheckLimits(kin.JointSpaceVector(trajectory[-1])):
@@ -317,5 +317,20 @@ class RobotControl:
         # for now: brut-force connectivity
         for n2 in self.goalRRT.nodes:
             if self.rrt.addPoint(n2.values) != None:
-                print("yay")
-                return
+                print("connecting subtrees")
+                self.rrt.addSubtreeNode(n2)
+                self.goalTree = None
+                self.ShowTree()
+                return True
+        return False
+
+    def BiRRT(self, goal):
+        self.InitGoalTree(goal)
+        while not self.ConnectTrees():
+            if len(self.rrt.nodes) > len(self.goalRRT.nodes):
+                self.GrowTree(rrt=self.goalRRT)
+                self.ShowTree(rrt=self.goalRRT)
+            else:
+                self.GrowTree()
+                self.ShowTree()
+

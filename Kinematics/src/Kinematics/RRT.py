@@ -33,6 +33,52 @@ class RRT:
         self.nodes.append(node)
         return node
 
+    def addSubtreeNode(self, otherNode):
+        own = self.addPoint(otherNode.values)
+        if own == None:
+            return
+
+        parent = own.parents[0]
+        self.nodes.remove(own)
+        current = otherNode
+        lastNode = None
+        while len(current.parents) > 0:
+            # * put old parent in list of childs
+            # * add new parent and remove from list of childs
+            oldParent = current.parents[0]
+            current.parents = [parent]
+            if parent in current.children:
+                current.children.remove(parent)
+            #add all children (and children of children) to the current tree
+            self._addSubtreeNode(current)
+            #add old parent to list of children
+            current.children.append(oldParent)
+            parent.children.append(current)
+            parent = current
+            #go on with next in list
+            current = oldParent
+
+        print(parent)
+        print(current)
+        print([str(x) for x in current.children])
+        # also add the root node
+        if parent in current.children:
+            print(" remove old parent ")
+            current.children.remove(parent)
+        current.parents = [parent]
+        self._addSubtreeNode(current)
+
+        
+    def _addSubtreeNode(self, subtreeNode):
+        """
+        recursive function to add child nodes to own node list
+        """
+        self.nodes.append(subtreeNode)
+        for n in subtreeNode.children:
+            self.nodes.append(n)
+            print(".")
+            self._addSubtreeNode(n)
+
     def sumDist(self, node):
         return sum([node.cart_distance(n) for n in self.nodes])
 

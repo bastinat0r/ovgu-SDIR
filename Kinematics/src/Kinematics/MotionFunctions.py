@@ -193,6 +193,10 @@ def PTPtoConfiguration(start_cfg, target_cfg, motiontype):
     :rtype: matrix of floats
     """
     eucl_dist = ceil(getEuclDistance(np.rad2deg(start_cfg), np.rad2deg(target_cfg)))
+    if int(eucl_dist) == 0:
+        trajectory = np.empty([1, 6])
+        trajectory[0] = start_cfg
+        return trajectory
     trajectory = np.empty([int(eucl_dist), 6])
 
     target_cfg = getEndPoints(target_cfg)
