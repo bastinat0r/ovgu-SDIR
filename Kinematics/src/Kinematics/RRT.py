@@ -58,12 +58,8 @@ class RRT:
             #go on with next in list
             current = oldParent
 
-        print(parent)
-        print(current)
-        print([str(x) for x in current.children])
         # also add the root node
         if parent in current.children:
-            print(" remove old parent ")
             current.children.remove(parent)
         current.parents = [parent]
         self._addSubtreeNode(current)
@@ -76,7 +72,6 @@ class RRT:
         self.nodes.append(subtreeNode)
         for n in subtreeNode.children:
             self.nodes.append(n)
-            print(".")
             self._addSubtreeNode(n)
 
     def sumDist(self, node):

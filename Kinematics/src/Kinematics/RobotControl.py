@@ -244,7 +244,7 @@ class RobotControl:
             self.handles.append(drawExample(self.robot.GetEnv(), node_pos + child_pos, presskey=False, depth=d))
             self.ShowNode(child, depth=d)
 
-    def ConnectConfigurationToTree(self, goal, growth=10, maxiter=np.Inf):
+    def ConnectConfigurationToTree(self, goal, growth=10, maxiter=np.Inf, near_current=True, chooseBySumDist=True, chooseByCloseNodeCount=True):
         goalNode = self.rrt.addPoint(goal.angles)
         if goalNode != None:
             return goalNode
@@ -257,7 +257,7 @@ class RobotControl:
             self.ShowTree()
             # generate 10 new points
             for x in xrange(growth):
-                self.AddRandomRRTPoint(near_current=True, chooseBySumDist=True, chooseByCloseNodeCount=True)
+                self.AddRandomRRTPoint(near_current=near_current, chooseBySumDist=chooseBySumDist, chooseByCloseNodeCount=chooseByCloseNodeCount)
             # try to add the goal-point
             goalNode = self.rrt.addPoint(goal.angles)
             if goalNode != None:
@@ -266,7 +266,7 @@ class RobotControl:
 
 
     def GetWaypoints(self, goal):
-        goalNode = self.ConnectConfigurationToTree(goal)
+        goalNode = self.ConnectConfigurationToTree(goal, maxiter=1)
         self.ShowTree()
         currentNode = goalNode
         waypoints = [currentNode]
@@ -274,15 +274,39 @@ class RobotControl:
             currentNode = currentNode.parents[0]
             waypoints.append(currentNode)
         waypoints.reverse()
+
+        waypointsToRoot = []
+        n = self.current_node
+        while n != self.rrt.root:
+            waypointsToRoot.append(n)
+            n = n.parents[0]
+        waypointsToRoot.append(self.rrt.root)
+        return waypointsToRoot + waypoints
+
+    def OptimizeWaypoints(self, waypoints):
+        i = 0
+        while i < len(waypoints) - 1:
+            j = i + 2
+            maxmove = i+1
+            while j < len(waypoints) - 1:
+                if self.checkConnection(waypoints[i], waypoints[j]):
+                    maxmove = j
+                j += 1
+            waypoints = waypoints[:i+1] + waypoints[maxmove:]
+            i += 1
         return waypoints
 
-    def CollisionFreeMove(self, goal):
-        self.MoveToRoot()
+
+    def TreeMove(self, goal, optimize=False):
         waypoints = self.GetWaypoints(goal)
+        if optimize:
+            waypoints = self.OptimizeWaypoints(waypoints)
         for w in waypoints:
             self.Move(kin.JointSpaceVector(w.values))
             self.current_node = w
             time.sleep(0.2)
+
+
 
     def GetRandomGoal(self):
         bounds = self.robot.GetDOFLimits()
@@ -301,7 +325,6 @@ class RobotControl:
             jsv = kin.JointSpaceVector(self.current_node.parents[0].values) 
             self.Move(jsv)
             self.current_node = self.current_node.parents[0]
-            print(len(self.current_node.parents))
         jsv = kin.JointSpaceVector(self.current_node.values) 
         self.Move(jsv)
 
@@ -311,6 +334,7 @@ class RobotControl:
             rrt = self.rrt
         for i in xrange(steps):
             self.AddRandomRRTPoint(near_current=True, chooseBySumDist=True, chooseByCloseNodeCount=True, rrt=rrt)
+        self.ShowTree(rrt=rrt)
 
     def ConnectTrees(self):
         #find good candidates for connecting the trees
@@ -324,13 +348,15 @@ class RobotControl:
                 return True
         return False
 
+    def NormalRRT(self, goal):
+        self.ConnectConfigurationToTree(goal, near_current=True, chooseBySumDist=True, chooseByCloseNodeCount=True)
+
+
     def BiRRT(self, goal):
         self.InitGoalTree(goal)
         while not self.ConnectTrees():
             if len(self.rrt.nodes) > len(self.goalRRT.nodes):
                 self.GrowTree(rrt=self.goalRRT)
-                self.ShowTree(rrt=self.goalRRT)
             else:
                 self.GrowTree()
-                self.ShowTree()
 
