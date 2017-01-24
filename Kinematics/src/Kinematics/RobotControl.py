@@ -18,6 +18,8 @@ class RobotControl:
                 self.ikmodel.autogenerate()
         self.InitRRT()
         self.current_node = self.rrt.root
+        self.random_seed = 42
+        random.seed(self.random_seed)
 
     
     def GetTCPTransformation(self, configuration=None):

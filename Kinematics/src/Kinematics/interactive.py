@@ -156,14 +156,23 @@ if __name__ == "__main__":
     mf.setLimits(robot)
     rc = RobotControl(robot)
     o = co.Obstacles()
-    co.loadConfig(env, "foobar")
-    for x in rc.GetCollidingObjects():
-        env.RemoveKinBody(x)
-    foobar_goal = [1.6785423619679571,
-            -1.3389945431922989,
-            1.2769405351508896,
-            -5.1480498168162656,
-            1.0746364933441117,
-            -1.1012573561229333]
+    co.loadConfig(env, "0")
+    zero = kin.JointSpaceVector()
+    goal1 = kin.JointSpaceVector([.6,.3,0,0,0,0])
+    angles = [-2.3402616475316536,
+              0.37087694940497862,
+              0.049799760938328053,
+              -2.4254883933364768,
+              0.57261032733476736,
+              -5.3048727359741399]
 
+    goal2 = kin.JointSpaceVector(angles)
+    angles = [-1.1378253308647706,
+             -1.4652930211011563,
+             1.8366394760258142,
+             -4.7026206048794332,
+             1.5845286138653063,
+             1.807793575279824]
+    goal3 = kin.JointSpaceVector(angles)
 
+    goals = [zero, goal1, goal2]
